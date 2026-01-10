@@ -26,21 +26,19 @@ input, select { width:100%;padding:10px;margin:5px 0;border-radius:6px;border:no
 .nav-btn:hover, .nav-btn.active { background:var(--primary-gold); color:#000; box-shadow:0 0 10px var(--primary-gold); }
 .hidden { display:none; }
 h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px; font-size:28px; font-weight:bold; }
-
-/* Home Page Cards Grid */
 .home-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
 .home-card { background: var(--card-bg); border: 2px solid var(--primary-gold); border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.6); transition:0.3s; }
 .home-card:hover { box-shadow:0 0 15px var(--primary-gold); }
 .home-card h3 { color: var(--primary-gold); margin:0 0 5px 0; font-weight:bold; font-size:16px; }
 .home-card p { margin:0; font-size:18px; font-weight:bold; }
-
-/* Cooldown Card */
 .cooldown-card { background: var(--cooldown-bg); color: var(--cooldown-text); border-radius:12px; padding:15px; text-align:center; font-weight:bold; font-size:18px; box-shadow:0 4px 8px rgba(0,0,0,0.5); margin-top:10px; }
 .cooldown-card h3 { margin:0 0 5px 0; font-weight:bold; }
-
-/* Task Page Main Balance */
 .task-balance { grid-column:1/-1; font-size:24px; padding:20px; border:3px solid var(--primary-gold); text-align:center; border-radius:12px; margin-bottom:20px; }
 </style>
+
+<!-- Monetag SDK -->
+<script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>
+
 </head>
 <body>
 
@@ -58,7 +56,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 <!-- Main App -->
 <div id="app" class="container hidden">
 
-  <!-- Notice -->
   <div id="notice" class="card">
     <h2 id="noticeTitle"></h2>
     <p id="noticeText"></p>
@@ -66,7 +63,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 
   <!-- Pages -->
 
-  <!-- Home Page -->
   <div id="homePage" class="page card">
     <h2>হোম</h2>
     <div class="home-grid">
@@ -94,7 +90,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
     </div>
   </div>
 
-  <!-- Task Page -->
   <div id="taskPage" class="page card hidden">
     <div class="task-balance">
       <h3>মেইন ব্যালেন্স</h3>
@@ -106,64 +101,36 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
     <div id="adContainer" class="card hidden"></div>
   </div>
 
-  <!-- Withdraw Page -->
   <div id="withdrawPage" class="page card hidden">
     <h2>উইথড্র</h2>
     <p>ন্যূনতম উইথড্র: $<span id="minWithdraw"></span></p>
     <p>রেফার প্রয়োজন: <span id="requiredReferral"></span></p>
-
     <label for="paymentMethod"><b>পেমেন্ট মেথড নির্বাচন করুন:</b></label>
     <select id="paymentMethod" class="btn">
       <option value="bKash">বিকাশ</option>
       <option value="Nagad">নগদ</option>
       <option value="Rocket">রকেট</option>
     </select>
-
     <label for="accountNumber"><b>একাউন্ট নাম্বার:</b></label>
     <input type="text" id="accountNumber" placeholder="নাম্বার লিখুন">
-
     <label for="withdrawAmount"><b>টাকা পরিমাণ:</b></label>
     <input type="number" id="withdrawAmount" placeholder="পরিমাণ লিখুন">
-
     <div class="btn" onclick="requestWithdraw()">উইথড্র রিকোয়েস্ট</div>
   </div>
 
-  <!-- Profile Page -->
   <div id="profilePage" class="page card hidden">
     <h2 style="text-align:center; color:#d4af37; font-size:28px; margin-bottom:15px;">প্রোফাইল</h2>
-    
-    <!-- User Info Cards Grid -->
     <div class="home-grid">
-      <div class="home-card">
-        <h3>ইউজার নাম</h3>
-        <p id="profileName"></p>
-      </div>
-      <div class="home-card">
-        <h3>মোট রেফার</h3>
-        <p id="profileRef"></p>
-      </div>
-      <div class="home-card">
-        <h3>রেফার লিংক</h3>
-        <p id="refLink" style="word-break:break-word; font-size:14px;"></p>
-      </div>
-      <div class="home-card">
-        <h3>টেলিগ্রাম চ্যানেল</h3>
-        <a id="telegramLink" href="#" target="_blank" style="color:#000; text-decoration:none; font-weight:bold;">যোগ দিন</a>
-      </div>
-      <div class="home-card">
-        <h3>সাপোর্ট</h3>
-        <a id="supportLink" href="#" target="_blank" style="color:#000; text-decoration:none; font-weight:bold;">যোগাযোগ</a>
-      </div>
-      <div class="home-card">
-        <h3>মেইন ব্যালেন্স</h3>
-        <p>$<span id="mainBalanceProfile">0</span></p>
-      </div>
+      <div class="home-card"><h3>ইউজার নাম</h3><p id="profileName"></p></div>
+      <div class="home-card"><h3>মোট রেফার</h3><p id="profileRef"></p></div>
+      <div class="home-card"><h3>রেফার লিংক</h3><p id="refLink" style="word-break:break-word; font-size:14px;"></p></div>
+      <div class="home-card"><h3>টেলিগ্রাম চ্যানেল</h3><a id="telegramLink" href="https://t.me/liteincomebd" target="_blank" style="color:#000; font-weight:bold;">যোগ দিন</a></div>
+      <div class="home-card"><h3>সাপোর্ট</h3><a id="supportLink" href="https://t.me/liteincomebd" target="_blank" style="color:#000; font-weight:bold;">যোগাযোগ</a></div>
+      <div class="home-card"><h3>মেইন ব্যালেন্স</h3><p>$<span id="mainBalanceProfile">0</span></p></div>
     </div>
-
     <div class="btn" onclick="logout()">লগআউট</div>
   </div>
 
-  <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="nav-btn active" onclick="showPage('homePage', this)">Home</div>
     <div class="nav-btn" onclick="showPage('taskPage', this)">Task</div>
@@ -180,11 +147,18 @@ const CONFIG = {
   COOLDOWN_HOURS: 12,
   REQUIRED_REFERRAL: 10,
   MIN_WITHDRAW: 300,
-  TELEGRAM_LINK: "https://t.me/yourchannel",
-  SUPPORT_LINK: "https://t.me/yoursupport",
+  TELEGRAM_BOT_TOKEN: "8027784844:AAGHfNwr1Yz5gOpTmNJ6OXrFW2X3GiEJLmc",
+  TELEGRAM_API: "https://mdrabbi1ratul.github.io/Lite-income-app/",
+  TELEGRAM_LINK: "https://t.me/liteincomebd",
+  SUPPORT_LINK: "https://t.me/liteincomebd",
+  ADMIN_ID: "6230555979",
   NOTICE_TITLE: "📢 গুরুত্বপূর্ণ নোটিস",
   NOTICE_TEXT: "আজ উইথড্র ৮টা PM-এ প্রক্রিয়াকরণ হবে। ফেক একটিভিটি = ব্যান।",
-  MONETAG_AD_CODE: `<script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>Total = CONFIG.DAILY_AD_LIMIT;
+  MONETAG_AD_CODE: `<div id="monetag-ad"><script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script></div>`
+};
+
+let user = {name:"", balance:0, referrals:0, adsViewed:0};
+let adsTotal = CONFIG.DAILY_AD_LIMIT;
 let cooldownEnd = null;
 let cooldownInterval = null;
 
@@ -227,7 +201,6 @@ function showPage(pageId, btn){
   document.getElementById(pageId).classList.remove('hidden');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-
   if(pageId==="profilePage") loadProfile();
 }
 
@@ -242,7 +215,6 @@ function updateCooldown(){
   const timerEl = document.getElementById('cooldownTimer');
   const now = new Date();
   const diff = cooldownEnd - now;
-
   if(diff <= 0){
     timerEl.innerText = "রেডি";
     clearInterval(cooldownInterval);
@@ -251,11 +223,9 @@ function updateCooldown(){
     document.getElementById('adsAvailable').innerText = adsTotal - user.adsViewed;
     return;
   }
-
   const hours = Math.floor(diff / (1000*60*60));
   const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
   const seconds = Math.floor((diff % (1000*60)) / 1000);
-
   timerEl.innerText = `${hours}h ${minutes}m ${seconds}s`;
 }
 
@@ -272,7 +242,6 @@ function viewAd(){
   document.getElementById('mainBalanceProfile').innerText = user.balance;
   document.getElementById('adsRemaining').innerText = adsTotal - user.adsViewed;
   document.getElementById('adsAvailable').innerText = adsTotal - user.adsViewed;
-
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT){
     startCooldown();
   }
@@ -282,24 +251,10 @@ function requestWithdraw(){
   const method = document.getElementById('paymentMethod').value;
   const account = document.getElementById('accountNumber').value;
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
-
-  if(!account){
-    alert("একাউন্ট নাম্বার লিখুন।");
-    return;
-  }
-  if(isNaN(amount) || amount < CONFIG.MIN_WITHDRAW){
-    alert(`ন্যূনতম উইথড্র $${CONFIG.MIN_WITHDRAW}।`);
-    return;
-  }
-  if(user.referrals < CONFIG.REQUIRED_REFERRAL){
-    alert(`উইথড্র করার জন্য কমপক্ষে ${CONFIG.REQUIRED_REFERRAL} রেফার প্রয়োজন।`);
-    return;
-  }
-  if(amount > user.balance){
-    alert("ব্যালেন্স যথেষ্ট নয়।");
-    return;
-  }
-
+  if(!account){ alert("একাউন্ট নাম্বার লিখুন।"); return; }
+  if(isNaN(amount) || amount < CONFIG.MIN_WITHDRAW){ alert(`ন্যূনতম উইথড্র $${CONFIG.MIN_WITHDRAW}`); return; }
+  if(user.referrals < CONFIG.REQUIRED_REFERRAL){ alert(`উইথড্র করার জন্য কমপক্ষে ${CONFIG.REQUIRED_REFERRAL} রেফার প্রয়োজন।`); return; }
+  if(amount > user.balance){ alert("ব্যালেন্স যথেষ্ট নয়।"); return; }
   alert(`উইথড্র রিকোয়েস্ট জমা হয়েছে!\nমেথড: ${method}\nএকাউন্ট: ${account}\nপরিমাণ: $${amount}`);
   user.balance -= amount;
   document.getElementById('mainBalance').innerText = user.balance;
@@ -326,4 +281,4 @@ function logout(){
 </script>
 
 </body>
-  </html>
+                                               </html>
