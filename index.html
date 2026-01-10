@@ -45,7 +45,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
   <div class="card">
     <h2>লগইন</h2>
     <input type="text" id="username" placeholder="আপনার নাম">
-    <input type="password" id="password" placeholder="পাসওয়ার্ড">
     <button class="btn" onclick="login()">লগইন</button>
   </div>
 </div>
@@ -98,17 +97,17 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
       <div class="home-card"><a id="supportLink" href="#" target="_blank" style="color:var(--primary-gold); text-decoration:none;">যোগাযোগ</a></div>
       <div class="home-card"><h3>ব্যালেন্স</h3><p>$<span id="mainBalanceProfile">0</span></p></div>
     </div>
-    <p onclick="adminAccess()" style="text-align:center; font-size:10px; color:#333; margin-top:10px;">Admin Access</p>
+    <p onclick="adminGate()" style="text-align:center; color:#222; font-size:10px; margin-top:15px; cursor:pointer;">Admin Access</p>
     <button class="btn" onclick="logout()" style="margin-top:20px; background:#ff4d4d; color:#fff;">লগআউট</button>
   </div>
 
-  <div id="adminPanel" class="page card hidden">
-    <h2 style="color:red;">Admin Panel</h2>
-    <p>ইউজার আইডি ব্যান করতে এখানে আইডি দিন:</p>
-    <input type="text" id="banIdInput" placeholder="User ID">
-    <button class="btn" style="background:red; color:white;" onclick="banUserAction()">আইডি ব্যান করুন</button>
-    <hr>
-    <button class="btn" onclick="showPage('homePage')">Back to App</button>
+  <div id="adminPage" class="page card hidden">
+    <h2 style="color:red;">অ্যাডমিন প্যানেল</h2>
+    <p>ইউজার আইডি ব্যান করুন:</p>
+    <input type="text" id="banUserId" placeholder="ইউজার আইডি">
+    <button class="btn" style="background:red; color:#fff;" onclick="banUserReport()">ব্যান রিপোর্ট পাঠান</button>
+    <hr style="border:1px solid #333;">
+    <button class="btn" onclick="showPage('homePage')">বন্ধ করুন</button>
   </div>
 
   <div class="bottom-nav">
@@ -134,45 +133,48 @@ const CONFIG = {
   SUPPORT_LINK: "https://t.me/liteincomebd",
   NOTICE_TITLE: "📢 গুরুত্বপূর্ণ নোটিস",
   NOTICE_TEXT: "আজ উইথড্র ৮টা PM-এ প্রক্রিয়াকরণ হবে। ফেক একটিভিটি = ব্যান।",
-  ADMIN_PASS: "7860" // আপনার অ্যাডমিন পাসওয়ার্ড
+  MONETAG_ZONE: '10411839',
+  ADMIN_PASS: "7860" 
 };
-
-// যাদের ব্যান করবেন তাদের আইডি (গিটহাবে এখান থেকে ম্যানুয়ালি এডিট করতে হবে)
-const BANNED_LIST = ["12345678", "000000"]; 
 
 let savedData = localStorage.getItem('lite_user_data_final');
 let user = savedData ? JSON.parse(savedData) : { 
   name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User", 
-  id: tg.initDataUnsafe.user ? String(tg.initDataUnsafe.user.id) : String(Math.floor(Math.random() * 1000000)),
+  id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : Math.floor(Math.random() * 1000000),
   balance: 0, 
   referrals: 0, 
   adsViewed: 0 
 };
 
-// ব্যান চেক
-if(BANNED_LIST.includes(user.id)) {
-    document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:100px;'>YOU ARE BANNED!</h1>";
-}
-
 function saveData() {
   localStorage.setItem('lite_user_data_final', JSON.stringify(user));
 }
 
-function sendUpdateToAdmin() {
-  const report = `📊 ব্যবহারকারী আপডেট\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n📺 দেখা এড: ${user.adsViewed}`;
-  fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(report)}&disable_notification=true`);
+function sendToTelegram(msg) {
+  const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
+  fetch(url, { method: 'GET', mode: 'no-cors' }).catch(e => console.log("TG Error"));
 }
+
+window.onload = () => {
+  if(user.name) {
+    document.getElementById('username').value = user.name;
+    if(savedData) login(true); 
+  }
+};
 
 function login(isAuto = false){
   const nameInput = document.getElementById('username').value;
   if(nameInput || isAuto){
-    if(!isAuto) user.name = nameInput;
+    if(!isAuto) {
+        user.name = nameInput;
+        sendToTelegram(`🆕 <b>নতুন লগইন</b>\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}`);
+    }
     saveData();
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     loadConfig();
     showPage('homePage', document.querySelector('.nav-btn.active'));
-  } else { alert("আপনার নাম লিখুন"); }
+  } else { alert("নাম লিখুন"); }
 }
 
 function loadConfig(){
@@ -191,12 +193,12 @@ function updateUI(){
   document.getElementById('mainBalance').innerText = user.balance.toFixed(2);
   document.getElementById('mainBalanceTask').innerText = user.balance.toFixed(2);
   document.getElementById('mainBalanceProfile').innerText = user.balance.toFixed(2);
-  document.getElementById('totalRef').innerText = user.referrals;
-  document.getElementById('profileRef').innerText = user.referrals;
   document.getElementById('adsAvailable').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
   document.getElementById('adsRemaining').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
   document.getElementById('adsTotal').innerText = CONFIG.DAILY_AD_LIMIT;
   document.getElementById('refLink').innerText = "https://t.me/LiteIncomeBot?start=" + user.id;
+  document.getElementById('totalRef').innerText = user.referrals;
+  document.getElementById('profileRef').innerText = user.referrals;
 }
 
 function showPage(pageId, btn){
@@ -208,45 +210,60 @@ function showPage(pageId, btn){
 
 function viewAd(){
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
-  user.adsViewed++;
-  user.balance += 0.10;
-  updateUI();
-  saveData();
-  sendUpdateToAdmin();
-  alert("এড দেখা সফল!");
+
+  // Monetag Ad Logic
+  if(typeof show_10411839 === 'function'){
+    show_10411839().then(() => {
+      user.adsViewed++;
+      user.balance += 0.10;
+      updateUI();
+      saveData();
+      sendToTelegram(`📺 <b>এড আপডেট</b>\n👤 ${user.name}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}`);
+      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) alert("লিমিট শেষ! কুলডাউন শুরু।");
+    }).catch(e => alert("এড লোড হয়নি!"));
+  } else {
+    alert("এড স্ক্রিপ্ট লোড হচ্ছে, একটু অপেক্ষা করুন...");
+  }
 }
 
 function requestWithdraw(){
   const method = document.getElementById('paymentMethod').value;
   const account = document.getElementById('accountNumber').value;
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
-  if(!account || isNaN(amount)) return alert("সঠিক তথ্য দিন");
-  if(amount > user.balance) return alert("ব্যালেন্স নাই!");
 
-  const msg = "💰 উইথড্র রিকোয়েস্ট\n👤 নাম: " + user.name + "\n🆔 আইডি: " + user.id + "\n🏦 মেথড: " + method + "\n📱 নাম্বার: " + account + "\n💵 পরিমাণ: $" + amount;
-  fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}`);
+  if(!account || isNaN(amount)) return alert("তথ্য দিন");
+  if(amount > user.balance) return alert("ব্যালেন্স নেই");
+
+  const msg = `💰 <b>উইথড্র রিকোয়েস্ট</b>\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}`;
+  sendToTelegram(msg);
+  
   alert("রিকোয়েস্ট পাঠানো হয়েছে!");
+  user.balance -= amount;
+  updateUI();
+  saveData();
 }
 
-// অ্যাডমিন এক্সেস ফাংশন
-function adminAccess() {
-    const pass = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
+// Admin Logic
+function adminGate() {
+    const pass = prompt("অ্যাডমিন পাসওয়ার্ড:");
     if(pass === CONFIG.ADMIN_PASS) {
-        showPage('adminPanel');
+        showPage('adminPage');
     } else { alert("ভুল পাসওয়ার্ড!"); }
 }
 
-function banUserAction() {
-    const id = document.getElementById('banIdInput').value;
-    alert("ইউজার " + id + " কে ব্যান করার রিকোয়েস্ট আপনার টেলিগ্রামে পাঠানো হয়েছে। গিটহাবে BANNED_LIST এ আইডিটি যোগ করে দিন।");
-    const msg = `🚫 BAN THIS ID: ${id}`;
-    fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}`);
+function banUserReport() {
+    const bid = document.getElementById('banUserId').value;
+    if(!bid) return;
+    sendToTelegram(`🚫 <b>BAN REQUEST</b>\nTarget ID: ${bid}\nAdmin wants to ban this user.`);
+    alert("ব্যান রিপোর্ট পাঠানো হয়েছে।");
 }
 
 function logout(){
-  localStorage.removeItem('lite_user_data_final');
-  location.reload();
+  if(confirm("লগআউট?")){
+    localStorage.removeItem('lite_user_data_final');
+    location.reload();
+  }
 }
 </script>
 </body>
-    </html>
+</html>
