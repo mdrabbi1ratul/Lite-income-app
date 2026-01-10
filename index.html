@@ -3,133 +3,287 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lite Income - Admin Connected</title>
+<title>Lite Income</title>
 <style>
-/* আপনার আগের স্টাইলগুলো এখানে বজায় রাখা হয়েছে */
-:root { --primary-gold: #d4af37; --bg-dark: #0a0a0a; --card-bg: #1c1c1c; --text-light: #fff; }
+:root {
+    --primary-gold: #d4af37;
+    --bg-dark: #0a0a0a;
+    --card-bg: #1c1c1c;
+    --text-light: #fff;
+    --nav-bg: #1a1a1a;
+    --cooldown-bg: #f2c94c;
+    --cooldown-text: #000;
+}
 body { margin:0; font-family:sans-serif; background: var(--bg-dark); color: var(--text-light);}
 .container { padding: 15px; padding-bottom: 80px; }
 .card { background: var(--card-bg); padding:15px; margin:10px 0; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.5); }
-.btn { display:block; background:var(--primary-gold); color:#000; text-align:center; padding:12px; border-radius:10px; margin:10px 0; cursor:pointer; font-weight:bold; border:none; width:100%; }
+.card h2 { color: var(--primary-gold); margin:0 0 10px 0; font-weight:bold; }
+.btn { display:block; background:var(--primary-gold); color:#000; text-align:center; padding:12px; border-radius:10px; margin:10px 0; cursor:pointer; font-weight:bold; transition: all 0.2s ease; border:none; width:100%; font-size:16px; }
+.btn:hover { box-shadow: 0 0 10px var(--primary-gold); }
+input, select { width:100%;padding:10px;margin:5px 0;border-radius:6px;border:none; outline:none; box-sizing: border-box; background: #2c2c2c; color: #fff; }
+.bottom-nav { display:flex; justify-content:space-around; background:var(--nav-bg); padding:10px 0; position:fixed; bottom:0; width:100%; border-top:2px solid var(--primary-gold); z-index: 1000; }
+.nav-btn { flex:1; margin:0 5px; background: var(--card-bg); padding:10px; border-radius:8px; text-align:center; color:var(--text-light); font-weight:bold; cursor:pointer; transition: 0.2s; font-size: 14px; }
+.nav-btn:hover, .nav-btn.active { background:var(--primary-gold); color:#000; box-shadow:0 0 10px var(--primary-gold); }
 .hidden { display:none; }
-input { width:100%;padding:10px;margin:5px 0;border-radius:6px; background: #2c2c2c; color: #fff; border:none; }
-.bottom-nav { display:flex; justify-content:space-around; background:#1a1a1a; padding:10px 0; position:fixed; bottom:0; width:100%; border-top:2px solid var(--primary-gold); }
-.nav-btn { flex:1; text-align:center; color:#fff; cursor:pointer; font-weight:bold; }
+h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px; font-size:28px; font-weight:bold; }
+.home-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+.home-card { background: var(--card-bg); border: 2px solid var(--primary-gold); border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.6); transition:0.3s; }
+.home-card h3 { color: var(--primary-gold); margin:0 0 5px 0; font-weight:bold; font-size:14px; }
+.home-card p { margin:0; font-size:18px; font-weight:bold; }
+.cooldown-card { background: var(--cooldown-bg); color: var(--cooldown-text); border-radius:12px; padding:15px; text-align:center; font-weight:bold; font-size:18px; box-shadow:0 4px 8px rgba(0,0,0,0.5); margin-top:10px; }
+.task-balance { grid-column:1/-1; font-size:24px; padding:20px; border:3px solid var(--primary-gold); text-align:center; border-radius:12px; margin-bottom:20px; }
 </style>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>
+
 </head>
 <body>
 
 <div id="loginPage" class="container">
-  <h1 style="text-align:center; color:var(--primary-gold);">Lite Income</h1>
+  <h1 class="app-title">Lite Income</h1>
   <div class="card">
+    <h2>লগইন</h2>
     <input type="text" id="username" placeholder="আপনার নাম">
-    <button class="btn" onclick="login()">প্রবেশ করুন</button>
+    <input type="password" id="password" placeholder="পাসওয়ার্ড">
+    <button class="btn" onclick="login()">লগইন</button>
   </div>
 </div>
 
 <div id="app" class="container hidden">
+  <div id="notice" class="card">
+    <h2 id="noticeTitle"></h2>
+    <p id="noticeText"></p>
+  </div>
+
   <div id="homePage" class="page card">
-    <h2>স্বাগতম, <span id="userName"></span></h2>
-    <div style="font-size:24px; color:var(--primary-gold);">ব্যালেন্স: $<span id="mainBalance">0</span></div>
-    <p>আজকের এড দেখা হয়েছে: <span id="adsCount">0</span>/15</p>
+    <h2>হোম</h2>
+    <div class="home-grid">
+      <div class="home-card"><h3>ইউজার নাম</h3><p id="userName"></p></div>
+      <div class="home-card"><h3>মোট রেফার</h3><p id="totalRef">0</p></div>
+      <div class="home-card"><h3>মেইন ব্যালেন্স</h3><p>$<span id="mainBalance">0</span></p></div>
+      <div class="home-card"><h3>এভেইলেবল এডস</h3><p id="adsAvailable">0</p></div>
+    </div>
+    <div class="cooldown-card"><h3>আজকের কুলডাউন</h3><p id="cooldownTimer">রেডি</p></div>
   </div>
 
   <div id="taskPage" class="page card hidden">
+    <div class="task-balance"><h3>মেইন ব্যালেন্স</h3><p>$<span id="mainBalanceTask">0</span></p></div>
     <h2>টাস্ক</h2>
-    <button class="btn" onclick="viewAd()">এড দেখুন ($0.10)</button>
+    <p>বাকি এড: <span id="adsRemaining"></span> / <span id="adsTotal"></span></p>
+    <button class="btn" onclick="viewAd()">এড দেখুন</button>
   </div>
 
   <div id="withdrawPage" class="page card hidden">
     <h2>উইথড্র</h2>
-    <input type="number" id="withdrawAmount" placeholder="পরিমাণ ($)">
-    <input type="text" id="accountNumber" placeholder="বিকাশ/নগদ নাম্বার">
+    <p>ন্যূনতম উইথড্র: $<span id="minWithdraw"></span></p>
+    <p>রেফার প্রয়োজন: <span id="requiredReferral"></span></p>
+    <select id="paymentMethod">
+      <option value="bKash">বিকাশ</option>
+      <option value="Nagad">নগদ</option>
+      <option value="Rocket">রকেট</option>
+    </select>
+    <input type="text" id="accountNumber" placeholder="নাম্বার লিখুন">
+    <input type="number" id="withdrawAmount" placeholder="পরিমাণ লিখুন">
     <button class="btn" onclick="requestWithdraw()">উইথড্র রিকোয়েস্ট</button>
   </div>
 
+  <div id="profilePage" class="page card hidden">
+    <h2 style="text-align:center; color:#d4af37;">প্রোফাইল</h2>
+    <div class="home-grid">
+      <div class="home-card"><h3>ইউজার নাম</h3><p id="profileName"></p></div>
+      <div class="home-card"><h3>মোট রেফার</h3><p id="profileRef">0</p></div>
+      <div class="home-card" style="grid-column: 1/-1;"><h3>রেফার লিংক</h3><p id="refLink" style="word-break:break-all; font-size:12px;"></p></div>
+      <div class="home-card"><a id="telegramLink" href="#" target="_blank" style="color:var(--primary-gold); text-decoration:none;">টেলিগ্রাম চ্যানেল</a></div>
+      <div class="home-card"><a id="supportLink" href="#" target="_blank" style="color:var(--primary-gold); text-decoration:none;">যোগাযোগ</a></div>
+      <div class="home-card"><h3>ব্যালেন্স</h3><p>$<span id="mainBalanceProfile">0</span></p></div>
+    </div>
+    <button class="btn" onclick="logout()" style="margin-top:20px; background:#ff4d4d; color:#fff;">লগআউট</button>
+  </div>
+
   <div class="bottom-nav">
-    <div class="nav-btn" onclick="showPage('homePage')">Home</div>
-    <div class="nav-btn" onclick="showPage('taskPage')">Task</div>
-    <div class="nav-btn" onclick="showPage('withdrawPage')">Withdraw</div>
+    <div class="nav-btn active" onclick="showPage('homePage', this)">Home</div>
+    <div class="nav-btn" onclick="showPage('taskPage', this)">Task</div>
+    <div class="nav-btn" onclick="showPage('withdrawPage', this)">Withdraw</div>
+    <div class="nav-btn" onclick="showPage('profilePage', this)">Profile</div>
   </div>
 </div>
 
 <script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
 const CONFIG = {
-  // আপনার ফর্মের আইডি এবং এন্ট্রি নম্বরগুলো এখানে দিতে হবে
-  FORM_URL: "https://docs.google.com/forms/u/0/d/e/1FAIpQLScJ_vT_9l4W8L7nC-M4S6G-zY3y-X_P5uXyX_X_X_X/formResponse", // এটি গুগল ফর্মের সাবমিট লিঙ্ক
+  DAILY_AD_LIMIT: 15,
+  COOLDOWN_HOURS: 12,
+  REQUIRED_REFERRAL: 0,
+  MIN_WITHDRAW: 1,
   BOT_TOKEN: "8027784844:AAGHfNwr1Yz5gOpTmNJ6OXrFW2X3GiEJLmc",
-  ADMIN_ID: "6230555979"
+  ADMIN_ID: "6230555979",
+  TELEGRAM_LINK: "https://t.me/liteincomebd",
+  SUPPORT_LINK: "https://t.me/liteincomebd",
+  NOTICE_TITLE: "📢 গুরুত্বপূর্ণ নোটিস",
+  NOTICE_TEXT: "আজ উইথড্র ৮টা PM-এ প্রক্রিয়াকরণ হবে। ফেক একটিভিটি = ব্যান।",
+  MONETAG_ZONE: '10411839',
+  // আপনার ফর্ম আইডিটি এখানে বসান (e/ এর পরের অংশ)
+  FORM_ID: "1FAIpQLScJ_vT_9l4W8L7nC-M4S6G-zY3y-X_P5uXyX_X_X_X" 
 };
 
-let user = JSON.parse(localStorage.getItem('lite_user')) || { 
-  name: "", balance: 0, ads: 0, id: Math.floor(Math.random() * 1000000) 
+let savedData = localStorage.getItem('lite_user_data_final');
+let user = savedData ? JSON.parse(savedData) : { 
+  name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "", 
+  id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : Math.floor(Math.random() * 1000000),
+  balance: 0, 
+  referrals: 0, 
+  adsViewed: 0 
 };
 
-function login() {
-  const name = document.getElementById('username').value;
-  if(name) {
-    user.name = name;
+function saveData() {
+  localStorage.setItem('lite_user_data_final', JSON.stringify(user));
+  syncToForm(); // ডাটা সেভ হলেই ফর্মে যাবে
+}
+
+function syncToForm() {
+  // আপনার ফর্মের লিঙ্ক থেকে entry.xxxx নম্বরগুলো দিয়ে এটি সাজাতে হয়
+  // আপনি যেহেতু ফর্ম দিয়েছেন, আমি অটো-সাবমিট সিস্টেমটি রেডি রাখছি
+  const formUrl = `https://docs.google.com/forms/d/e/uBhBQf5xTYMp9VCm9/formResponse`;
+  
+  // এটি ব্যাকগ্রাউন্ডে ডাটা পাঠাবে ইউজারকে বিরক্ত না করে
+  const params = new URLSearchParams();
+  // নিচের entry নম্বরগুলো আপনার ফর্ম থেকে নিতে হবে, আমি জাস্ট একটি ডামি স্ট্রাকচার দিচ্ছি
+  params.append('entry.1111111', user.id); 
+  params.append('entry.2222222', user.name);
+  params.append('entry.3333333', user.balance);
+
+  fetch(formUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: params
+  }).catch(e => console.log("Sync failed"));
+}
+
+window.onload = () => {
+  if(user.name) {
+    document.getElementById('username').value = user.name;
+    if(savedData) login(true); 
+  }
+};
+
+function login(isAuto = false){
+  const nameInput = document.getElementById('username').value;
+  if(nameInput || isAuto){
+    if(!isAuto) user.name = nameInput;
     saveData();
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    updateUI();
-  }
+    loadConfig();
+    showPage('homePage', document.querySelector('.nav-btn.active'));
+  } else { alert("আপনার নাম লিখুন"); }
 }
 
-function updateUI() {
+function loadConfig(){
+  document.getElementById('noticeTitle').innerText = CONFIG.NOTICE_TITLE;
+  document.getElementById('noticeText').innerText = CONFIG.NOTICE_TEXT;
+  document.getElementById('minWithdraw').innerText = CONFIG.MIN_WITHDRAW;
+  document.getElementById('requiredReferral').innerText = CONFIG.REQUIRED_REFERRAL;
+  document.getElementById('telegramLink').href = CONFIG.TELEGRAM_LINK;
+  document.getElementById('supportLink').href = CONFIG.SUPPORT_LINK;
+  updateUI();
+}
+
+function updateUI(){
   document.getElementById('userName').innerText = user.name;
+  document.getElementById('profileName').innerText = user.name;
   document.getElementById('mainBalance').innerText = user.balance.toFixed(2);
-  document.getElementById('adsCount').innerText = user.ads;
+  document.getElementById('mainBalanceTask').innerText = user.balance.toFixed(2);
+  document.getElementById('mainBalanceProfile').innerText = user.balance.toFixed(2);
+  document.getElementById('adsAvailable').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
+  document.getElementById('adsRemaining').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
+  document.getElementById('adsTotal').innerText = CONFIG.DAILY_AD_LIMIT;
+  document.getElementById('refLink').innerText = "https://t.me/LiteIncomeBot?start=" + user.id;
 }
 
-function viewAd() {
-  if(user.ads < 15) {
-    user.ads++;
-    user.balance += 0.10;
-    saveData();
-    updateUI();
-    sendDataToSheet(); // গুগল শিটে ডাটা পাঠানো
-    alert("এড দেখা সফল!");
+function showPage(pageId, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById(pageId).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+
+function viewAd(){
+  if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
+
+  if(typeof show_10411839 === 'function'){
+    show_10411839().then(() => {
+      user.adsViewed++;
+      user.balance += 0.10; // ১ এর বদলে ০.১০ ডলার করলাম রিয়ালিস্টিক করার জন্য
+      updateUI();
+      saveData();
+      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
+    }).catch(e => {
+        alert("এড লোড হচ্ছে না, আবার চেষ্টা করুন।");
+    });
   } else {
-    alert("আজকের লিমিট শেষ!");
+    user.adsViewed++;
+    user.balance += 0.10;
+    updateUI();
+    saveData();
   }
 }
 
-function saveData() {
-  localStorage.setItem('lite_user', JSON.stringify(user));
-}
+function requestWithdraw(){
+  const method = document.getElementById('paymentMethod').value;
+  const account = document.getElementById('accountNumber').value;
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
 
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
+  if(!account || isNaN(amount)) return alert("সঠিক তথ্য দিন");
+  if(amount < CONFIG.MIN_WITHDRAW) return alert("ন্যূনতম উইথড্র $" + CONFIG.MIN_WITHDRAW);
+  if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(CONFIG.REQUIRED_REFERRAL + " টি রেফার প্রয়োজন");
+  if(amount > user.balance) return alert("ব্যালেন্স পর্যাপ্ত নয়");
 
-// এই ফাংশনটি গুগল ফর্মে ডাটা পাঠাবে
-function sendDataToSheet() {
-  const formData = new FormData();
-  // এখানে আপনার ফর্মের এন্ট্রি আইডিগুলো বসাতে হবে (যেমন: entry.123456)
-  // আমি আপাতত একটি ডামি ফরম্যাট দিচ্ছি
-  formData.append("entry.111111", user.id);
-  formData.append("entry.222222", user.name);
-  formData.append("entry.333333", user.balance);
-  formData.append("entry.444444", user.ads);
-
-  fetch(CONFIG.FORM_URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: formData
-  });
-}
-
-function requestWithdraw() {
-  const amount = document.getElementById('withdrawAmount').value;
-  const num = document.getElementById('accountNumber').value;
-  if(amount > user.balance) return alert("ব্যালেন্স নেই");
+  const msg = "💰 উইথড্র রিকোয়েস্ট\n\n👤 নাম: " + user.name + "\n🆔 আইডি: " + user.id + "\n🏦 মেথড: " + method + "\n📱 নাম্বার: " + account + "\n💵 পরিমাণ: $" + amount;
   
-  const msg = `💰 উইথড্র\nনাম: ${user.name}\nআইডি: ${user.id}\nটাকা: $${amount}\nনাম্বার: ${num}`;
-  fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}`)
-  .then(() => alert("অনুরোধ পাঠানো হয়েছে"));
+  const url = "https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/sendMessage?chat_id=" + CONFIG.ADMIN_ID + "&text=" + encodeURIComponent(msg);
+  
+  fetch(url)
+  .then(res => {
+    if(res.ok){
+      alert("✅ রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
+      user.balance -= amount;
+      updateUI();
+      saveData();
+    } else {
+      alert("❌ মেসেজ পাঠাতে সমস্যা হয়েছে। বট স্টার্ট করুন।");
+    }
+  }).catch(() => alert("নেটওয়ার্ক সমস্যা!"));
+}
+
+function startCooldown(){
+  let end = new Date();
+  end.setHours(end.getHours() + CONFIG.COOLDOWN_HOURS);
+  const timer = setInterval(() => {
+    let now = new Date();
+    let diff = end - now;
+    if(diff <= 0) {
+      clearInterval(timer);
+      user.adsViewed = 0;
+      saveData();
+      document.getElementById('cooldownTimer').innerText = "রেডি";
+      updateUI();
+    } else {
+      let h = Math.floor(diff/3600000);
+      let m = Math.floor((diff%3600000)/60000);
+      document.getElementById('cooldownTimer').innerText = h + "h " + m + "m";
+    }
+  }, 1000);
+}
+
+function logout(){
+  if(confirm("লগআউট করতে চান? ডাটা মুছে যাবে।")){
+    localStorage.removeItem('lite_user_data_final');
+    location.reload();
+  }
 }
 </script>
 </body>
-</html>
+    </html>
