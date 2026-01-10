@@ -125,7 +125,7 @@ tg.expand();
 const CONFIG = {
   DAILY_AD_LIMIT: 15,
   COOLDOWN_HOURS: 12,
-  REQUIRED_REFERRAL: 0,
+  REQUIRED_REFERRAL: 10,
   MIN_WITHDRAW: 1,
   BOT_TOKEN: "8027784844:AAGHfNwr1Yz5gOpTmNJ6OXrFW2X3GiEJLmc",
   ADMIN_ID: "6230555979",
@@ -216,7 +216,7 @@ function viewAd(){
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
-      user.balance += 0.10;
+      user.balance += 0.80;
       updateUI();
       saveData();
       sendFullReport("📺 এড দেখার আপডেট");
