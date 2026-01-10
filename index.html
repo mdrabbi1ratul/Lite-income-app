@@ -103,9 +103,10 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 
   <div id="adminPage" class="page card hidden">
     <h2 style="color:red;">অ্যাডমিন প্যানেল</h2>
-    <p>ইউজার আইডি ব্যান করুন:</p>
-    <input type="text" id="banUserId" placeholder="ইউজার আইডি">
-    <button class="btn" style="background:red; color:#fff;" onclick="banUserReport()">ব্যান রিপোর্ট পাঠান</button>
+    <p>ইউজার আইডি ব্যান/আনব্যান করুন:</p>
+    <input type="text" id="targetUserId" placeholder="ইউজার আইডি">
+    <button class="btn" style="background:red; color:#fff;" onclick="manageUser('BAN')">ইউজার ব্যান করুন</button>
+    <button class="btn" style="background:green; color:#fff;" onclick="manageUser('UNBAN')">ইউজার আনব্যান করুন</button>
     <hr style="border:1px solid #333;">
     <button class="btn" onclick="showPage('homePage')">বন্ধ করুন</button>
   </div>
@@ -122,6 +123,10 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+// রেফারেল প্যারামিটার ধরা
+const urlParams = new URLSearchParams(window.location.search);
+const startParam = tg.initDataUnsafe.start_param || urlParams.get('start');
+
 const CONFIG = {
   DAILY_AD_LIMIT: 15,
   COOLDOWN_HOURS: 12,
@@ -137,31 +142,40 @@ const CONFIG = {
   ADMIN_PASS: "7860" 
 };
 
+// ডাটা লোড
 let savedData = localStorage.getItem('lite_user_data_final');
+let bannedList = JSON.parse(localStorage.getItem('banned_users') || "[]");
+
 let user = savedData ? JSON.parse(savedData) : { 
   name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User", 
   id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : Math.floor(Math.random() * 1000000),
   balance: 0, 
   referrals: 0, 
-  adsViewed: 0 
+  adsViewed: 0,
+  isBanned: false
 };
+
+// ব্যান চেক
+if(bannedList.includes(user.id.toString())) {
+    user.isBanned = true;
+}
 
 function saveData() {
   localStorage.setItem('lite_user_data_final', JSON.stringify(user));
 }
 
-// রিপোর্ট ফাংশন আপডেট করা হয়েছে
-function sendFullReport(title) {
-  const msg = `<b>${title}</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}/${CONFIG.DAILY_AD_LIMIT}`;
+function sendFullReport(title, extra = "") {
+  const msg = `<b>${title}</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}/${CONFIG.DAILY_AD_LIMIT}\n${extra}`;
   const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
-  fetch(url, { method: 'GET', mode: 'no-cors' }).catch(e => console.log("TG Error"));
+  fetch(url, { method: 'GET', mode: 'no-cors' });
 }
 
 window.onload = () => {
-  if(user.name) {
-    document.getElementById('username').value = user.name;
-    if(savedData) login(true); 
+  if(user.isBanned) {
+      document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:50px;'>You are BANNED! Contact Admin.</h1>";
+      return;
   }
+  if(savedData) login(true);
 };
 
 function login(isAuto = false){
@@ -169,7 +183,8 @@ function login(isAuto = false){
   if(nameInput || isAuto){
     if(!isAuto) {
         user.name = nameInput;
-        sendFullReport("🆕 নতুন ইউজার লগইন");
+        let refMsg = startParam ? `🤝 রেফার বাই আইডি: ${startParam}` : "Direct Join";
+        sendFullReport("🆕 নতুন ইউজার লগইন", refMsg);
     }
     saveData();
     document.getElementById('loginPage').classList.add('hidden');
@@ -212,7 +227,6 @@ function showPage(pageId, btn){
 
 function viewAd(){
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
-
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
@@ -220,10 +234,8 @@ function viewAd(){
       updateUI();
       saveData();
       sendFullReport("📺 এড দেখার আপডেট");
-      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
+      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) alert("লিমিট শেষ!");
     }).catch(e => alert("এড লোড হয়নি!"));
-  } else {
-    alert("এড স্ক্রিপ্ট লোড হচ্ছে...");
   }
 }
 
@@ -234,12 +246,9 @@ function requestWithdraw(){
 
   if(!account || isNaN(amount)) return alert("তথ্য দিন");
   if(amount > user.balance) return alert("ব্যালেন্স নেই");
+  if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(`ন্যূনতম ${CONFIG.REQUIRED_REFERRAL} রেফার প্রয়োজন!`);
 
-  const withdrawMsg = `💰 <b>উইথড্র রিকোয়েস্ট</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}`;
-  
-  const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(withdrawMsg)}&parse_mode=HTML`;
-  fetch(url, { method: 'GET', mode: 'no-cors' });
-  
+  sendFullReport("💰 উইথড্র রিকোয়েস্ট", `🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}`);
   alert("রিকোয়েস্ট পাঠানো হয়েছে!");
   user.balance -= amount;
   updateUI();
@@ -253,33 +262,24 @@ function adminGate() {
     } else { alert("ভুল পাসওয়ার্ড!"); }
 }
 
-function banUserReport() {
-    const bid = document.getElementById('banUserId').value;
-    if(!bid) return;
-    const msg = `🚫 <b>BAN REQUEST</b>\nTarget ID: ${bid}\nAdmin wants to ban this user.`;
-    const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
-    fetch(url, { method: 'GET', mode: 'no-cors' });
-    alert("ব্যান রিপোর্ট পাঠানো হয়েছে।");
-}
+function manageUser(type) {
+    const targetId = document.getElementById('targetUserId').value;
+    if(!targetId) return alert("আইডি দিন");
 
-function startCooldown(){
-  let end = new Date();
-  end.setHours(end.getHours() + CONFIG.COOLDOWN_HOURS);
-  const timer = setInterval(() => {
-    let now = new Date();
-    let diff = end - now;
-    if(diff <= 0) {
-      clearInterval(timer);
-      user.adsViewed = 0;
-      saveData();
-      document.getElementById('cooldownTimer').innerText = "রেডি";
-      updateUI();
+    let currentBanned = JSON.parse(localStorage.getItem('banned_users') || "[]");
+
+    if(type === 'BAN') {
+        if(!currentBanned.includes(targetId)) currentBanned.push(targetId);
+        alert("আইডি " + targetId + " ব্যান করা হয়েছে।");
+        sendFullReport("🚫 BAN ACTION", `Target: ${targetId} has been banned.`);
     } else {
-      let h = Math.floor(diff/3600000);
-      let m = Math.floor((diff%3600000)/60000);
-      document.getElementById('cooldownTimer').innerText = h + "h " + m + "m";
+        currentBanned = currentBanned.filter(id => id !== targetId);
+        alert("আইডি " + targetId + " আনব্যান করা হয়েছে।");
+        sendFullReport("✅ UNBAN ACTION", `Target: ${targetId} is now free.`);
     }
-  }, 1000);
+    
+    localStorage.setItem('banned_users', JSON.stringify(currentBanned));
+    document.getElementById('targetUserId').value = "";
 }
 
 function logout(){
@@ -290,4 +290,4 @@ function logout(){
 }
 </script>
 </body>
-                                                                                              </html>
+</html>
