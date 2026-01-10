@@ -3,152 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lite Income - Pro</title>
+<title>Lite Income - Pro Admin</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
 <style>
 :root {
-    --primary-gold: #ffcc33; /* Brighter Gold */
+    --primary-gold: #ffcc33; 
     --bg-dark: #050505;
     --card-bg: #121212;
     --text-light: #e0e0e0;
     --nav-bg: #0f0f0f;
-    --accent: #d4af37;
+    --danger: #ff4d4d;
+    --success: #2ecc71;
 }
-body { margin:0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg-dark); color: var(--text-light); overflow-x: hidden;}
+body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--text-light); }
 .container { padding: 20px; padding-bottom: 90px; max-width: 500px; margin: auto; }
-.card { background: var(--card-bg); padding:20px; margin:15px 0; border-radius:15px; border: 1px solid #222; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-.card h2 { color: var(--primary-gold); margin:0 0 15px 0; font-size: 20px; border-left: 4px solid var(--primary-gold); padding-left: 10px; }
-.btn { display:block; background: linear-gradient(145deg, #ffcc33, #d4af37); color:#000; text-align:center; padding:14px; border-radius:12px; margin:12px 0; cursor:pointer; font-weight:bold; transition: 0.3s; border:none; width:100%; font-size:16px; text-transform: uppercase; letter-spacing: 1px; }
-.btn:active { transform: scale(0.95); }
-input, select { width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid #333; outline:none; background: #1a1a1a; color: #fff; }
+.card { background: var(--card-bg); padding:20px; margin:15px 0; border-radius:15px; border: 1px solid #222; }
+.card h2 { color: var(--primary-gold); margin:0 0 15px 0; font-size: 18px; border-left: 4px solid var(--primary-gold); padding-left: 10px; }
+.btn { display:block; background: linear-gradient(145deg, #ffcc33, #d4af37); color:#000; text-align:center; padding:14px; border-radius:12px; margin:10px 0; cursor:pointer; font-weight:bold; border:none; width:100%; font-size:14px; text-transform: uppercase; }
+input, select, textarea { width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid #333; background: #1a1a1a; color: #fff; box-sizing: border-box; }
 
-/* Bottom Nav Styling */
-.bottom-nav { display:flex; justify-content:space-around; background:var(--nav-bg); padding:12px 0; position:fixed; bottom:0; width:100%; border-top:1px solid var(--primary-gold); z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.8); }
-.nav-btn { flex:1; text-align:center; color:#888; font-weight:bold; cursor:pointer; font-size: 13px; transition: 0.3s; }
+/* Admin Specific */
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-box { background: #1a1a1a; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333; }
+.stat-box small { color: #888; font-size: 11px; }
+.stat-box div { color: var(--primary-gold); font-size: 18px; font-weight: bold; }
+.list-item { background: #000; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; font-size: 13px; }
+.list-item b { color: var(--primary-gold); }
+
+.bottom-nav { display:flex; background:var(--nav-bg); padding:12px 0; position:fixed; bottom:0; width:100%; border-top:1px solid var(--primary-gold); z-index: 1000; }
+.nav-btn { flex:1; text-align:center; color:#888; font-weight:bold; cursor:pointer; font-size: 13px; }
 .nav-btn.active { color: var(--primary-gold); }
-
 .hidden { display:none; }
-h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:25px; font-size:32px; font-weight:900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(212,175,55,0.3); }
-
-/* Home Grid */
-.home-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-.home-card { background: #181818; border: 1px solid #282828; border-radius:15px; padding:15px; text-align:center; }
-.home-card h3 { color: #888; margin:0; font-size:12px; text-transform: uppercase; }
-.home-card p { margin:5px 0 0 0; font-size:18px; font-weight:bold; color: var(--primary-gold); }
-
-.status-badge { display:inline-block; padding:3px 8px; border-radius:5px; font-size:10px; background: #333; color: #fff; margin-bottom: 5px; }
-.task-balance { text-align:center; padding:25px; background: linear-gradient(145deg, #1a1a1a, #0a0a0a); border-radius:15px; border: 1px solid var(--primary-gold); margin-bottom: 20px; }
-.task-balance h3 { margin:0; color: #888; font-size: 14px; }
-.task-balance p { margin: 10px 0 0 0; font-size: 32px; font-weight: 900; color: var(--primary-gold); }
+h1.app-title { text-align:center; color: var(--primary-gold); margin: 20px 0; font-size:28px; font-weight:900; letter-spacing: 2px; }
 </style>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>
-
 </head>
 <body>
 
 <div id="loginPage" class="container">
   <h1 class="app-title">LITE INCOME</h1>
   <div class="card">
-    <h2>শুরু করুন</h2>
-    <p style="font-size: 12px; color: #888;">নাম এবং ফোন নম্বর দিয়ে একাউন্ট খুলুন</p>
-    <input type="text" id="regName" placeholder="আপনার পুরো নাম">
+    <h2>লগইন / সাইন আপ</h2>
+    <input type="text" id="regName" placeholder="আপনার নাম">
     <input type="number" id="regPhone" placeholder="বিকাশ/নগদ নম্বর">
-    <button class="btn" onclick="handleAuth()">লগইন / সাইন আপ</button>
+    <button class="btn" onclick="handleAuth()">প্রবেশ করুন</button>
   </div>
 </div>
 
 <div id="app" class="container hidden">
   <div id="homePage" class="page">
-    <div id="notice" class="card" style="border-left: 5px solid var(--primary-gold);">
-      <h2 id="noticeTitle" style="font-size: 16px; border:none; padding:0;"></h2>
-      <p id="noticeText" style="font-size: 14px; margin:0; color: #bbb;"></p>
+    <div class="card" style="border-left-color: var(--primary-gold);">
+        <h2 id="noticeTitle"></h2>
+        <p id="noticeText" style="font-size: 14px; color: #bbb;"></p>
     </div>
-
-    <div class="home-grid">
-      <div class="home-card"><h3>ইউজার আইডি</h3><p id="userIdDisplay">--</p></div>
-      <div class="home-card"><h3>ব্যালেন্স</h3><p>$<span id="mainBalance">0.00</span></p></div>
-      <div class="home-card"><h3>মোট রেফার</h3><p id="totalRef">0</p></div>
-      <div class="home-card"><h3>আজকের এড</h3><p id="adsAvailable">0/15</p></div>
+    <div class="admin-grid">
+        <div class="stat-box"><small>ব্যালেন্স</small><div id="mainBalance">$0.00</div></div>
+        <div class="stat-box"><small>মোট রেফার</small><div id="totalRef">0</div></div>
     </div>
-    <button class="btn" style="margin-top: 20px;" onclick="showPage('taskPage')">কাজ শুরু করুন</button>
+    <button class="btn" onclick="showPage('taskPage')">কাজ শুরু করুন</button>
   </div>
 
   <div id="taskPage" class="page hidden">
-    <div class="task-balance">
-        <h3>Current Earnings</h3>
-        <p>$<span id="mainBalanceTask">0.00</span></p>
-    </div>
-    <div class="card">
-        <h2>Daily Tasks</h2>
-        <p style="text-align:center; color: #888;">বাকি এড: <span id="adsRemaining">0</span> / 15</p>
-        <button id="adBtn" class="btn" onclick="runAdTask()">এড দেখুন</button>
+    <div class="card" style="text-align:center;">
+        <h3 id="taskStatusHead">টাস্ক মেনু</h3>
+        <p>আজকের এড: <span id="adsToday">0</span> / 15</p>
+        <button id="adBtn" class="btn" onclick="runAdTask()">AD ভিডিও দেখুন</button>
     </div>
   </div>
 
   <div id="withdrawPage" class="page hidden">
     <div class="card">
-        <h2>Withdraw Funds</h2>
-        <p style="font-size:13px; color:#888;">মিনিমাম উইথড্র: $<span id="minWithdrawDisp"></span> | প্রয়োজনীয় রেফার: <span id="reqRefDisp"></span></p>
+        <h2>উইথড্র ফান্ড</h2>
         <select id="paymentMethod">
-          <option value="bKash">bKash</option>
-          <option value="Nagad">Nagad</option>
-          <option value="Rocket">Rocket</option>
+            <option value="bKash">bKash</option>
+            <option value="Nagad">Nagad</option>
         </select>
-        <input type="text" id="accNumber" placeholder="আপনার নম্বর">
         <input type="number" id="wdAmount" placeholder="পরিমাণ ($)">
+        <input type="text" id="accNumber" placeholder="রিসিভ নম্বর">
         <button class="btn" onclick="submitWithdraw()">রিকোয়েস্ট পাঠান</button>
     </div>
   </div>
 
   <div id="profilePage" class="page hidden">
     <div class="card" style="text-align:center;">
-        <div style="width:70px; height:70px; background:var(--primary-gold); border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#000; font-size:24px; font-weight:bold;" id="avatar">U</div>
-        <h2 id="profileName" style="border:none; padding:0; margin-top:10px;">User Name</h2>
-        <p id="profilePhone" style="color:#888; font-size:13px;"></p>
+        <h2 id="profileName"></h2>
+        <p id="refLink" style="font-size: 10px; color: var(--primary-gold);"></p>
+        <button class="btn" onclick="copyRef()">লিংক কপি</button>
     </div>
-    <div class="card">
-        <h2>রেফারেল লিংক</h2>
-        <p id="refLink" style="font-size:11px; background:#000; padding:10px; border-radius:5px; word-break:break-all; color: var(--primary-gold);"></p>
-        <button class="btn" style="font-size:12px; padding:8px;" onclick="copyRef()">লিংক কপি করুন</button>
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <button class="btn" style="background:#222; color:#fff;" onclick="window.open(CONFIG.TELEGRAM_LINK)">Channel</button>
-        <button class="btn" style="background:#222; color:#fff;" onclick="window.open(CONFIG.SUPPORT_LINK)">Support</button>
-    </div>
-    <p onclick="adminAccess()" style="text-align:center; color:#222; font-size:10px; cursor:pointer; margin-top:20px;">SYSTEM ADMIN</p>
+    <p onclick="adminAccess()" style="text-align:center; color:#222; font-size:10px; cursor:pointer;">ADMIN PANEL</p>
   </div>
 
   <div id="adminPage" class="page hidden">
-    <h2 style="color:red; border-left-color:red;">ADMIN DASHBOARD</h2>
+    <h1 style="color:var(--danger); font-size: 20px; text-align: center;">PRO ADMIN CONTROL</h1>
+    
+    <div class="admin-grid">
+        <div class="stat-box"><small>মোট ইউজার</small><div id="admTotalUsers">0</div></div>
+        <div class="stat-box"><small>সিস্টেম ব্যালেন্স</small><div id="admTotalWallet">$0</div></div>
+    </div>
+
     <div class="card">
-        <h3>ইউজার কন্ট্রোল</h3>
-        <input type="text" id="admUserId" placeholder="ইউজার আইডি">
-        <input type="number" id="admAmount" placeholder="অ্যামাউন্ট ($)">
+        <h2>অ্যাপ সেটিংস</h2>
+        <label>নোটিস হেডলাইন:</label>
+        <input type="text" id="setNoticeTitle" placeholder="নোটিস শিরোনাম">
+        <label>বিস্তারিত নোটিস:</label>
+        <textarea id="setNoticeText" rows="2"></textarea>
+        <button class="btn" style="background:#444; color:#fff;" onclick="updateAppSettings()">সেটিংস আপডেট করুন</button>
+    </div>
+
+    <div class="card">
+        <h2>ইউজার এডিট</h2>
+        <input type="text" id="admUserId" placeholder="ইউজার আইডি (ফোন নম্বর)">
+        <input type="number" id="admAmount" placeholder="পরিমাণ ($)">
         <div style="display:flex; gap:5px;">
-            <button class="btn" style="background:green; color:#fff;" onclick="updateBalanceAdmin('ADD')">Add</button>
-            <button class="btn" style="background:red; color:#fff;" onclick="updateBalanceAdmin('SUB')">Less</button>
+            <button class="btn" style="background:var(--success); color:#fff;" onclick="updateBalanceAdmin('ADD')">যোগ</button>
+            <button class="btn" style="background:var(--danger); color:#fff;" onclick="updateBalanceAdmin('SUB')">বিয়োগ</button>
         </div>
-        <button class="btn" style="background:#444; color:#fff;" onclick="manageBan('BAN')">User Ban</button>
     </div>
 
     <div class="card">
-        <h3>Pending Referrals</h3>
-        <div id="pendingRefList" style="font-size:12px; max-height: 200px; overflow-y: auto;">
-            </div>
+        <h2>রেফারেল ভেরিফিকেশন</h2>
+        <div id="pendingRefList"></div>
     </div>
 
     <div class="card">
-        <h3>Withdraw Requests</h3>
-        <div id="pendingWdList" style="font-size:12px;">
-            </div>
+        <h2>উইথড্র রিকোয়েস্ট</h2>
+        <div id="pendingWdList"></div>
     </div>
 
-    <button class="btn" style="background:#222; color:#fff;" onclick="showPage('homePage')">Exit Admin</button>
+    <button class="btn" style="background:#222; color:#fff;" onclick="showPage('homePage')">বন্ধ করুন</button>
   </div>
 
   <div class="bottom-nav">
@@ -160,7 +147,7 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:25px
 </div>
 
 <script>
-// --- CONFIGURATION ---
+// --- CONFIG & FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyD_umGq2C78hRinwHGl9SNVFuZzb12iooc",
   authDomain: "lite-income-f6287.firebaseapp.com",
@@ -170,229 +157,161 @@ const firebaseConfig = {
   appId: "1:721063152582:web:e195b9e7c79ac274ba40c7",
   databaseURL: "https://lite-income-f6287-default-rtdb.firebaseio.com/"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const CONFIG = {
-  DAILY_AD_LIMIT: 15,
-  AD_REWARD: 0.80,
-  REF_REWARD: 0.50,
-  MIN_WITHDRAW: 1,
-  REQ_REFERRAL: 10,
-  ADMIN_PASS: "7860",
-  TELEGRAM_LINK: "https://t.me/liteincomebd",
-  SUPPORT_LINK: "https://t.me/liteincomebd",
-  BOT_TOKEN: "8027784844:AAGHfNwr1Yz5gOpTmNJ6OXrFW2X3GiEJLmc",
-  ADMIN_CHAT_ID: "6230555979"
-};
-
 let currentUser = null;
+let appSettings = {};
 const tg = window.Telegram.WebApp;
 const urlParams = new URLSearchParams(window.location.search);
 const referrerId = tg.initDataUnsafe.start_param || urlParams.get('start');
 
-// --- AUTH SYSTEM ---
+// --- AUTH ---
 function handleAuth() {
     const name = document.getElementById('regName').value;
     const phone = document.getElementById('regPhone').value;
-
-    if(!name || !phone) return alert("সব তথ্য দিন");
-
-    const uid = phone; // Using phone as UID for simplicity
-    db.ref('users/' + uid).once('value', snapshot => {
-        if(snapshot.exists()) {
-            loadUserData(snapshot.val());
+    if(!name || !phone) return alert("তথ্য দিন");
+    
+    db.ref('users/' + phone).once('value', snap => {
+        if(snap.exists()) {
+            loadUser(snap.val());
         } else {
-            // New Registration
-            const newUser = {
-                id: uid,
-                name: name,
-                phone: phone,
-                balance: 0,
-                referrals: 0,
-                adsToday: 0,
-                isBanned: false,
-                lastAdDate: new Date().toDateString()
-            };
-            db.ref('users/' + uid).set(newUser);
-            
-            // Handle Referral Tracking (Admin Pending)
-            if(referrerId && referrerId !== uid) {
-                db.ref('pending_referrals').push({
-                    from: referrerId,
-                    to: uid,
-                    toName: name,
-                    status: 'pending',
-                    timestamp: Date.now()
-                });
-                sendTG(`🤝 New Referral! \nUser ${name} joined under ID ${referrerId}. Check admin panel to approve.`);
+            const newUser = { id: phone, name, phone, balance: 0, referrals: 0, adsToday: 0, lastDate: new Date().toDateString() };
+            db.ref('users/' + phone).set(newUser);
+            if(referrerId && referrerId !== phone) {
+                db.ref('pending_referrals').push({ from: referrerId, toName: name, toId: phone, timestamp: Date.now() });
             }
-            loadUserData(newUser);
+            loadUser(newUser);
         }
     });
 }
 
-function loadUserData(data) {
-    if(data.isBanned) {
-        alert("You are BANNED!");
-        return;
-    }
+function loadUser(data) {
     currentUser = data;
-    // Check Daily Reset
-    if(currentUser.lastAdDate !== new Date().toDateString()) {
-        currentUser.adsToday = 0;
-        currentUser.lastAdDate = new Date().toDateString();
-        db.ref('users/' + currentUser.id).update({ adsToday: 0, lastAdDate: currentUser.lastAdDate });
-    }
-    
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    setupUI();
+    db.ref('app_settings').on('value', snap => {
+        appSettings = snap.val() || { noticeTitle: "Lite Income", noticeText: "কাজ করুন..." };
+        document.getElementById('noticeTitle').innerText = appSettings.noticeTitle;
+        document.getElementById('noticeText').innerText = appSettings.noticeText;
+    });
+    updateUI();
 }
 
-function setupUI() {
-    document.getElementById('noticeTitle').innerText = "📢 Welcome " + currentUser.name;
-    document.getElementById('noticeText').innerText = "কাজ শেষ করে উইথড্র দিন। ফেক রেফার করবেন না।";
-    document.getElementById('profileName').innerText = currentUser.name;
-    document.getElementById('profilePhone').innerText = currentUser.phone;
-    document.getElementById('avatar').innerText = currentUser.name[0];
-    document.getElementById('userIdDisplay').innerText = currentUser.id;
-    document.getElementById('minWithdrawDisp').innerText = CONFIG.MIN_WITHDRAW;
-    document.getElementById('reqRefDisp').innerText = CONFIG.REQ_REFERRAL;
-    document.getElementById('refLink').innerText = "https://t.me/LiteIncomeBot?start=" + currentUser.id;
-    updateBalances();
-}
-
-function updateBalances() {
-    document.getElementById('mainBalance').innerText = currentUser.balance.toFixed(2);
-    document.getElementById('mainBalanceTask').innerText = currentUser.balance.toFixed(2);
-    document.getElementById('mainBalanceProfile').innerText = currentUser.balance.toFixed(2);
+function updateUI() {
+    document.getElementById('mainBalance').innerText = "$" + currentUser.balance.toFixed(2);
     document.getElementById('totalRef').innerText = currentUser.referrals;
-    document.getElementById('profileRef').innerText = currentUser.referrals;
-    document.getElementById('adsAvailable').innerText = currentUser.adsToday + "/15";
-    document.getElementById('adsRemaining').innerText = 15 - currentUser.adsToday;
+    document.getElementById('adsToday').innerText = currentUser.adsToday;
+    document.getElementById('profileName').innerText = currentUser.name;
+    document.getElementById('refLink').innerText = "https://t.me/LiteIncomeBot?start=" + currentUser.id;
 }
 
-// --- TASK SYSTEM ---
+// --- TASK ---
 function runAdTask() {
-    if(currentUser.adsToday >= 15) return alert("আজকের লিমিট শেষ!");
-    
+    if(currentUser.adsToday >= 15) return alert("লিমিট শেষ!");
     if(typeof show_10411839 === 'function'){
         show_10411839().then(() => {
-            currentUser.balance += CONFIG.AD_REWARD;
+            currentUser.balance += 0.80;
             currentUser.adsToday += 1;
-            db.ref('users/' + currentUser.id).update({
-                balance: currentUser.balance,
-                adsToday: currentUser.adsToday
-            });
-            updateBalances();
-            sendTG(`📺 Ad Viewed: ${currentUser.name} ($${CONFIG.AD_REWARD})`);
-        }).catch(() => alert("এড লোড হচ্ছে না, একটু পর চেষ্টা করুন।"));
+            db.ref('users/' + currentUser.id).update({ balance: currentUser.balance, adsToday: currentUser.adsToday });
+            updateUI();
+        });
     }
 }
 
-// --- WITHDRAW SYSTEM ---
-function submitWithdraw() {
-    const amount = parseFloat(document.getElementById('wdAmount').value);
-    const acc = document.getElementById('accNumber').value;
-    const method = document.getElementById('paymentMethod').value;
-
-    if(amount < CONFIG.MIN_WITHDRAW) return alert("মিনিমাম $"+CONFIG.MIN_WITHDRAW);
-    if(currentUser.balance < amount) return alert("পর্যাপ্ত ব্যালেন্স নেই");
-    if(currentUser.referrals < CONFIG.REQ_REFERRAL) return alert(CONFIG.REQ_REFERRAL + "টি রেফার প্রয়োজন");
-
-    const wdData = {
-        uid: currentUser.id,
-        name: currentUser.name,
-        amount: amount,
-        method: method,
-        account: acc,
-        timestamp: Date.now()
-    };
-
-    db.ref('withdrawals').push(wdData);
-    currentUser.balance -= amount;
-    db.ref('users/' + currentUser.id).update({ balance: currentUser.balance });
-    updateBalances();
-    alert("উইথড্র রিকোয়েস্ট পাঠানো হয়েছে!");
-    sendTG(`💰 Withdrawal Request!\nUser: ${currentUser.name}\nAmount: $${amount}\nMethod: ${method}\nNo: ${acc}`);
-}
-
-// --- ADMIN SYSTEM ---
+// --- ADMIN FUNCTIONS ---
 function adminAccess() {
-    const p = prompt("অ্যাডমিন পাসওয়ার্ড:");
-    if(p === CONFIG.ADMIN_PASS) {
+    if(prompt("Admin Password:") === "7860") {
         showPage('adminPage');
-        loadAdminData();
+        loadAdminStats();
     }
 }
 
-function loadAdminData() {
-    // Load Pending Referrals
+function loadAdminStats() {
+    // General Stats
+    db.ref('users').on('value', snap => {
+        let total = 0; let count = 0;
+        snap.forEach(u => { count++; total += u.val().balance; });
+        document.getElementById('admTotalUsers').innerText = count;
+        document.getElementById('admTotalWallet').innerText = "$" + total.toFixed(2);
+    });
+
+    // Pending Referrals List
     db.ref('pending_referrals').on('value', snap => {
         const list = document.getElementById('pendingRefList');
         list.innerHTML = "";
         snap.forEach(child => {
-            const data = child.val();
-            list.innerHTML += `<div class="card" style="font-size:11px; margin:5px 0;">
-                By: ${data.from} | New: ${data.toName}
-                <button onclick="approveRef('${child.key}', '${data.from}')" style="background:green; color:#fff; border:none; padding:5px; margin-left:10px;">Approve</button>
+            const d = child.val();
+            list.innerHTML += `<div class="list-item">
+                <b>${d.from}</b> কে রেফার করেছে <b>${d.toName}</b>
+                <button class="btn" style="padding:5px; font-size:10px;" onclick="approveRef('${child.key}', '${d.from}')">Approve</button>
             </div>`;
         });
     });
 
-    // Load Withdrawals
+    // Withdraw List
     db.ref('withdrawals').on('value', snap => {
         const list = document.getElementById('pendingWdList');
         list.innerHTML = "";
         snap.forEach(child => {
-            const data = child.val();
-            list.innerHTML += `<div class="card" style="font-size:11px; margin:5px 0;">
-                ${data.name} | $${data.amount} | ${data.method} | ${data.account}
-                <button onclick="deleteWd('${child.key}')" style="background:red; color:#fff; border:none; padding:5px;">Clear</button>
+            const d = child.val();
+            list.innerHTML += `<div class="list-item">
+                ID: ${d.uid} | $${d.amount} | ${d.method} | ${d.account}
+                <button class="btn" style="background:red; padding:5px; font-size:10px; color:#fff;" onclick="deleteWd('${child.key}')">Done/Delete</button>
             </div>`;
         });
     });
 }
 
-function approveRef(key, referrerId) {
-    db.ref('users/' + referrerId).once('value', snap => {
+function updateAppSettings() {
+    const title = document.getElementById('setNoticeTitle').value;
+    const text = document.getElementById('setNoticeText').value;
+    db.ref('app_settings').update({ noticeTitle: title, noticeText: text });
+    alert("অ্যাপ আপডেট হয়েছে!");
+}
+
+function approveRef(key, refId) {
+    db.ref('users/' + refId).once('value', snap => {
         if(snap.exists()) {
-            let refData = snap.val();
-            db.ref('users/' + referrerId).update({
-                balance: (refData.balance || 0) + CONFIG.REF_REWARD,
-                referrals: (refData.referrals || 0) + 1
-            });
+            let u = snap.val();
+            db.ref('users/' + refId).update({ balance: u.balance + 0.50, referrals: u.referrals + 1 });
             db.ref('pending_referrals/' + key).remove();
-            alert("Referral Approved!");
+            alert("রেফার অনুমোদিত!");
         }
     });
 }
 
 function updateBalanceAdmin(type) {
-    const targetId = document.getElementById('admUserId').value;
-    const amount = parseFloat(document.getElementById('admAmount').value);
-    db.ref('users/' + targetId).once('value', snap => {
-        if(snap.exists()){
-            let u = snap.val();
-            let newBal = type === 'ADD' ? u.balance + amount : u.balance - amount;
-            db.ref('users/' + targetId).update({ balance: newBal });
-            alert("Updated!");
-        } else { alert("User not found!"); }
+    const id = document.getElementById('admUserId').value;
+    const amt = parseFloat(document.getElementById('admAmount').value);
+    db.ref('users/' + id).once('value', snap => {
+        if(snap.exists()) {
+            let newBal = type === 'ADD' ? snap.val().balance + amt : snap.val().balance - amt;
+            db.ref('users/' + id).update({ balance: newBal });
+            alert("ব্যালেন্স আপডেট হয়েছে!");
+        }
     });
 }
 
-function deleteWd(key) { if(confirm("Clear this request?")) db.ref('withdrawals/' + key).remove(); }
-
-// --- HELPERS ---
-function showPage(pageId, btn) {
+// --- UTILS ---
+function showPage(id, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.getElementById(pageId).classList.remove('hidden');
+    document.getElementById(id).classList.remove('hidden');
     if(btn) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
+}
+
+function submitWithdraw() {
+    const amt = parseFloat(document.getElementById('wdAmount').value);
+    const acc = document.getElementById('accNumber').value;
+    if(amt > currentUser.balance) return alert("ব্যালেন্স নেই");
+    db.ref('withdrawals').push({ uid: currentUser.id, amount: amt, account: acc, method: document.getElementById('paymentMethod').value });
+    currentUser.balance -= amt;
+    db.ref('users/' + currentUser.id).update({ balance: currentUser.balance });
+    updateUI();
+    alert("রিকোয়েস্ট পাঠানো হয়েছে!");
 }
 
 function copyRef() {
@@ -400,9 +319,7 @@ function copyRef() {
     alert("লিংক কপি হয়েছে!");
 }
 
-function sendTG(msg) {
-    fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
-}
+function deleteWd(key) { db.ref('withdrawals/' + key).remove(); }
 </script>
 </body>
-        </html>
+</html>
