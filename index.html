@@ -124,14 +124,12 @@ const CONFIG = {
   SUPPORT_LINK: "https://t.me/liteincomebd",
   NOTICE_TITLE: "📢 গুরুত্বপূর্ণ নোটিস",
   NOTICE_TEXT: "আজ উইথড্র ৮টা PM-এ প্রক্রিয়াকরণ হবে। ফেক একটিভিটি = ব্যান।",
-  MONETAG_ZONE: '10411839',
-  // আপনার ফর্ম আইডিটি এখানে বসান (e/ এর পরের অংশ)
-  FORM_ID: "1FAIpQLScJ_vT_9l4W8L7nC-M4S6G-zY3y-X_P5uXyX_X_X_X" 
+  MONETAG_ZONE: '10411839'
 };
 
 let savedData = localStorage.getItem('lite_user_data_final');
 let user = savedData ? JSON.parse(savedData) : { 
-  name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "", 
+  name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User", 
   id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : Math.floor(Math.random() * 1000000),
   balance: 0, 
   referrals: 0, 
@@ -140,26 +138,12 @@ let user = savedData ? JSON.parse(savedData) : {
 
 function saveData() {
   localStorage.setItem('lite_user_data_final', JSON.stringify(user));
-  syncToForm(); // ডাটা সেভ হলেই ফর্মে যাবে
 }
 
-function syncToForm() {
-  // আপনার ফর্মের লিঙ্ক থেকে entry.xxxx নম্বরগুলো দিয়ে এটি সাজাতে হয়
-  // আপনি যেহেতু ফর্ম দিয়েছেন, আমি অটো-সাবমিট সিস্টেমটি রেডি রাখছি
-  const formUrl = `https://docs.google.com/forms/d/e/uBhBQf5xTYMp9VCm9/formResponse`;
-  
-  // এটি ব্যাকগ্রাউন্ডে ডাটা পাঠাবে ইউজারকে বিরক্ত না করে
-  const params = new URLSearchParams();
-  // নিচের entry নম্বরগুলো আপনার ফর্ম থেকে নিতে হবে, আমি জাস্ট একটি ডামি স্ট্রাকচার দিচ্ছি
-  params.append('entry.1111111', user.id); 
-  params.append('entry.2222222', user.name);
-  params.append('entry.3333333', user.balance);
-
-  fetch(formUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: params
-  }).catch(e => console.log("Sync failed"));
+// নতুন ফাংশন: ইউজারের কাজের আপডেট আপনার টেলিগ্রামে পাঠানো
+function sendUpdateToAdmin() {
+  const report = `📊 ব্যবহারকারী আপডেট\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n📺 দেখা এড: ${user.adsViewed}`;
+  fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(report)}&disable_notification=true`);
 }
 
 window.onload = () => {
@@ -172,7 +156,12 @@ window.onload = () => {
 function login(isAuto = false){
   const nameInput = document.getElementById('username').value;
   if(nameInput || isAuto){
-    if(!isAuto) user.name = nameInput;
+    if(!isAuto) {
+        user.name = nameInput;
+        // নতুন ইউজার লগইন করলে আপনাকে জানাবে
+        const welcomeMsg = `🆕 নতুন ইউজার প্রবেশ করেছে\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}`;
+        fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(welcomeMsg)}`);
+    }
     saveData();
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
@@ -216,18 +205,22 @@ function viewAd(){
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
-      user.balance += 0.10; // ১ এর বদলে ০.১০ ডলার করলাম রিয়ালিস্টিক করার জন্য
+      user.balance += 0.10;
       updateUI();
       saveData();
+      sendUpdateToAdmin(); // এড দেখার পর ডাটা টেলিগ্রামে পাঠাবে
       if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
     }).catch(e => {
         alert("এড লোড হচ্ছে না, আবার চেষ্টা করুন।");
     });
   } else {
+    // টেস্ট মোড বা এড লোড না হলে
     user.adsViewed++;
     user.balance += 0.10;
     updateUI();
     saveData();
+    sendUpdateToAdmin(); 
+    alert("এড দেখা সফল!");
   }
 }
 
@@ -238,22 +231,20 @@ function requestWithdraw(){
 
   if(!account || isNaN(amount)) return alert("সঠিক তথ্য দিন");
   if(amount < CONFIG.MIN_WITHDRAW) return alert("ন্যূনতম উইথড্র $" + CONFIG.MIN_WITHDRAW);
-  if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(CONFIG.REQUIRED_REFERRAL + " টি রেফার প্রয়োজন");
   if(amount > user.balance) return alert("ব্যালেন্স পর্যাপ্ত নয়");
 
   const msg = "💰 উইথড্র রিকোয়েস্ট\n\n👤 নাম: " + user.name + "\n🆔 আইডি: " + user.id + "\n🏦 মেথড: " + method + "\n📱 নাম্বার: " + account + "\n💵 পরিমাণ: $" + amount;
   
-  const url = "https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/sendMessage?chat_id=" + CONFIG.ADMIN_ID + "&text=" + encodeURIComponent(msg);
-  
-  fetch(url)
+  fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}`)
   .then(res => {
     if(res.ok){
       alert("✅ রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
       user.balance -= amount;
       updateUI();
       saveData();
+      sendUpdateToAdmin(); 
     } else {
-      alert("❌ মেসেজ পাঠাতে সমস্যা হয়েছে। বট স্টার্ট করুন।");
+      alert("❌ সমস্যা হয়েছে। বট স্টার্ট করুন।");
     }
   }).catch(() => alert("নেটওয়ার্ক সমস্যা!"));
 }
@@ -279,11 +270,11 @@ function startCooldown(){
 }
 
 function logout(){
-  if(confirm("লগআউট করতে চান? ডাটা মুছে যাবে।")){
+  if(confirm("লগআউট করতে চান?")){
     localStorage.removeItem('lite_user_data_final');
     location.reload();
   }
 }
 </script>
 </body>
-    </html>
+          </html>
