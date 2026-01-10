@@ -150,7 +150,9 @@ function saveData() {
   localStorage.setItem('lite_user_data_final', JSON.stringify(user));
 }
 
-function sendToTelegram(msg) {
+// রিপোর্ট ফাংশন আপডেট করা হয়েছে
+function sendFullReport(title) {
+  const msg = `<b>${title}</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}/${CONFIG.DAILY_AD_LIMIT}`;
   const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
   fetch(url, { method: 'GET', mode: 'no-cors' }).catch(e => console.log("TG Error"));
 }
@@ -167,7 +169,7 @@ function login(isAuto = false){
   if(nameInput || isAuto){
     if(!isAuto) {
         user.name = nameInput;
-        sendToTelegram(`🆕 <b>নতুন লগইন</b>\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}`);
+        sendFullReport("🆕 নতুন ইউজার লগইন");
     }
     saveData();
     document.getElementById('loginPage').classList.add('hidden');
@@ -211,18 +213,17 @@ function showPage(pageId, btn){
 function viewAd(){
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
 
-  // Monetag Ad Logic
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
       user.balance += 0.10;
       updateUI();
       saveData();
-      sendToTelegram(`📺 <b>এড আপডেট</b>\n👤 ${user.name}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}`);
-      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) alert("লিমিট শেষ! কুলডাউন শুরু।");
+      sendFullReport("📺 এড দেখার আপডেট");
+      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
     }).catch(e => alert("এড লোড হয়নি!"));
   } else {
-    alert("এড স্ক্রিপ্ট লোড হচ্ছে, একটু অপেক্ষা করুন...");
+    alert("এড স্ক্রিপ্ট লোড হচ্ছে...");
   }
 }
 
@@ -234,8 +235,10 @@ function requestWithdraw(){
   if(!account || isNaN(amount)) return alert("তথ্য দিন");
   if(amount > user.balance) return alert("ব্যালেন্স নেই");
 
-  const msg = `💰 <b>উইথড্র রিকোয়েস্ট</b>\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}`;
-  sendToTelegram(msg);
+  const withdrawMsg = `💰 <b>উইথড্র রিকোয়েস্ট</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}`;
+  
+  const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(withdrawMsg)}&parse_mode=HTML`;
+  fetch(url, { method: 'GET', mode: 'no-cors' });
   
   alert("রিকোয়েস্ট পাঠানো হয়েছে!");
   user.balance -= amount;
@@ -243,7 +246,6 @@ function requestWithdraw(){
   saveData();
 }
 
-// Admin Logic
 function adminGate() {
     const pass = prompt("অ্যাডমিন পাসওয়ার্ড:");
     if(pass === CONFIG.ADMIN_PASS) {
@@ -254,8 +256,30 @@ function adminGate() {
 function banUserReport() {
     const bid = document.getElementById('banUserId').value;
     if(!bid) return;
-    sendToTelegram(`🚫 <b>BAN REQUEST</b>\nTarget ID: ${bid}\nAdmin wants to ban this user.`);
+    const msg = `🚫 <b>BAN REQUEST</b>\nTarget ID: ${bid}\nAdmin wants to ban this user.`;
+    const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
+    fetch(url, { method: 'GET', mode: 'no-cors' });
     alert("ব্যান রিপোর্ট পাঠানো হয়েছে।");
+}
+
+function startCooldown(){
+  let end = new Date();
+  end.setHours(end.getHours() + CONFIG.COOLDOWN_HOURS);
+  const timer = setInterval(() => {
+    let now = new Date();
+    let diff = end - now;
+    if(diff <= 0) {
+      clearInterval(timer);
+      user.adsViewed = 0;
+      saveData();
+      document.getElementById('cooldownTimer').innerText = "রেডি";
+      updateUI();
+    } else {
+      let h = Math.floor(diff/3600000);
+      let m = Math.floor((diff%3600000)/60000);
+      document.getElementById('cooldownTimer').innerText = h + "h " + m + "m";
+    }
+  }, 1000);
 }
 
 function logout(){
@@ -266,4 +290,4 @@ function logout(){
 }
 </script>
 </body>
-</html>
+                                                                                              </html>
