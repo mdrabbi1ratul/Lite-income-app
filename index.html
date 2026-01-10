@@ -103,10 +103,16 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 
   <div id="adminPage" class="page card hidden">
     <h2 style="color:red;">অ্যাডমিন প্যানেল</h2>
-    <p>ইউজার আইডি ব্যান/আনব্যান করুন:</p>
+    <p>ইউজার আইডি ব্যান/আনব্যান:</p>
     <input type="text" id="targetUserId" placeholder="ইউজার আইডি">
     <button class="btn" style="background:red; color:#fff;" onclick="manageUser('BAN')">ইউজার ব্যান করুন</button>
     <button class="btn" style="background:green; color:#fff;" onclick="manageUser('UNBAN')">ইউজার আনব্যান করুন</button>
+    
+    <hr style="border:1px solid #333; margin: 15px 0;">
+    <p>রেফার বোনাস এড করুন (ম্যানুয়াল):</p>
+    <input type="number" id="bonusAmount" placeholder="পরিমাণ (যেমন: 0.50)">
+    <button class="btn" onclick="addManualBonus()">বোনাস ও রেফার এড করুন</button>
+    
     <hr style="border:1px solid #333;">
     <button class="btn" onclick="showPage('homePage')">বন্ধ করুন</button>
   </div>
@@ -123,7 +129,7 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// রেফারেল প্যারামিটার ধরা
+// রেফারেল আইডি ধরার উন্নত সিস্টেম
 const urlParams = new URLSearchParams(window.location.search);
 const startParam = tg.initDataUnsafe.start_param || urlParams.get('start');
 
@@ -142,7 +148,6 @@ const CONFIG = {
   ADMIN_PASS: "7860" 
 };
 
-// ডাটা লোড
 let savedData = localStorage.getItem('lite_user_data_final');
 let bannedList = JSON.parse(localStorage.getItem('banned_users') || "[]");
 
@@ -152,20 +157,16 @@ let user = savedData ? JSON.parse(savedData) : {
   balance: 0, 
   referrals: 0, 
   adsViewed: 0,
-  isBanned: false
+  isBanned: false,
+  hasReportedJoin: false 
 };
 
-// ব্যান চেক
-if(bannedList.includes(user.id.toString())) {
-    user.isBanned = true;
-}
+if(bannedList.includes(user.id.toString())) { user.isBanned = true; }
 
-function saveData() {
-  localStorage.setItem('lite_user_data_final', JSON.stringify(user));
-}
+function saveData() { localStorage.setItem('lite_user_data_final', JSON.stringify(user)); }
 
 function sendFullReport(title, extra = "") {
-  const msg = `<b>${title}</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n📺 মোট এড: ${user.adsViewed}/${CONFIG.DAILY_AD_LIMIT}\n${extra}`;
+  const msg = `<b>${title}</b>\n\n👤 নাম: ${user.name}\n🆔 আইডি: ${user.id}\n💰 ব্যালেন্স: $${user.balance.toFixed(2)}\n👥 রেফার: ${user.referrals}\n${extra}`;
   const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage?chat_id=${CONFIG.ADMIN_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
   fetch(url, { method: 'GET', mode: 'no-cors' });
 }
@@ -183,7 +184,8 @@ function login(isAuto = false){
   if(nameInput || isAuto){
     if(!isAuto) {
         user.name = nameInput;
-        let refMsg = startParam ? `🤝 রেফার বাই আইডি: ${startParam}` : "Direct Join";
+        // রেফার রিপোর্ট পাঠানো
+        let refMsg = startParam ? `🤝 <b>রেফার বাই আইডি:</b> <code>${startParam}</code>\n(এডমিন প্যানেলে গিয়ে এই আইডিতে ব্যালেন্স এড করুন)` : "Direct Join";
         sendFullReport("🆕 নতুন ইউজার লগইন", refMsg);
     }
     saveData();
@@ -234,21 +236,32 @@ function viewAd(){
       updateUI();
       saveData();
       sendFullReport("📺 এড দেখার আপডেট");
-      if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) alert("লিমিট শেষ!");
-    }).catch(e => alert("এড লোড হয়নি!"));
+    });
   }
 }
 
+// অ্যাডমিন প্যানেল থেকে নিজের একাউন্টে বোনাস এড করার ফাংশন
+function addManualBonus() {
+    const amount = parseFloat(document.getElementById('bonusAmount').value);
+    if(isNaN(amount) || amount <= 0) return alert("সঠিক পরিমাণ দিন");
+    
+    user.balance += amount;
+    user.referrals += 1;
+    saveData();
+    updateUI();
+    alert("সফলভাবে ব্যালেন্স ও রেফার যোগ হয়েছে!");
+    sendFullReport("🛠 এডমিন অ্যাকশন", `ম্যানুয়ালি ব্যালেন্স এড করা হয়েছে: $${amount}`);
+    document.getElementById('bonusAmount').value = "";
+}
+
 function requestWithdraw(){
-  const method = document.getElementById('paymentMethod').value;
   const account = document.getElementById('accountNumber').value;
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
-
   if(!account || isNaN(amount)) return alert("তথ্য দিন");
   if(amount > user.balance) return alert("ব্যালেন্স নেই");
   if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(`ন্যূনতম ${CONFIG.REQUIRED_REFERRAL} রেফার প্রয়োজন!`);
 
-  sendFullReport("💰 উইথড্র রিকোয়েস্ট", `🏦 মেথড: ${method}\n📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}`);
+  sendFullReport("💰 উইথড্র রিকোয়েস্ট", `📱 নম্বর: ${account}\n💵 পরিমাণ: $${amount}`);
   alert("রিকোয়েস্ট পাঠানো হয়েছে!");
   user.balance -= amount;
   updateUI();
@@ -257,27 +270,21 @@ function requestWithdraw(){
 
 function adminGate() {
     const pass = prompt("অ্যাডমিন পাসওয়ার্ড:");
-    if(pass === CONFIG.ADMIN_PASS) {
-        showPage('adminPage');
-    } else { alert("ভুল পাসওয়ার্ড!"); }
+    if(pass === CONFIG.ADMIN_PASS) { showPage('adminPage'); } 
+    else { alert("ভুল পাসওয়ার্ড!"); }
 }
 
 function manageUser(type) {
     const targetId = document.getElementById('targetUserId').value;
     if(!targetId) return alert("আইডি দিন");
-
     let currentBanned = JSON.parse(localStorage.getItem('banned_users') || "[]");
-
     if(type === 'BAN') {
         if(!currentBanned.includes(targetId)) currentBanned.push(targetId);
-        alert("আইডি " + targetId + " ব্যান করা হয়েছে।");
-        sendFullReport("🚫 BAN ACTION", `Target: ${targetId} has been banned.`);
+        alert("ব্যান করা হয়েছে।");
     } else {
         currentBanned = currentBanned.filter(id => id !== targetId);
-        alert("আইডি " + targetId + " আনব্যান করা হয়েছে।");
-        sendFullReport("✅ UNBAN ACTION", `Target: ${targetId} is now free.`);
+        alert("আনব্যান করা হয়েছে।");
     }
-    
     localStorage.setItem('banned_users', JSON.stringify(currentBanned));
     document.getElementById('targetUserId').value = "";
 }
