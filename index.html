@@ -68,7 +68,7 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
   </div>
 
   <div id="taskPage" class="page card hidden">
-    <div class="task-balance"><h3>মেইন ব্যালেন্স</h3><p>৳<span id="mainBalanceTask">0</span></p></div>
+    <div class="task-balance"><h3>মেইন ব্যালেন্স</h3><p>$<span id="mainBalanceTask">0</span></p></div>
     <h2>টাস্ক</h2>
     <p>বাকি এড: <span id="adsRemaining"></span> / <span id="adsTotal"></span></p>
     <button class="btn" onclick="viewAd()">এড দেখুন</button>
@@ -76,7 +76,7 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 
   <div id="withdrawPage" class="page card hidden">
     <h2>উইথড্র</h2>
-    <p>ন্যূনতম উইথড্র: ৳<span id="minWithdraw"></span></p>
+    <p>ন্যূনতম উইথড্র: $<span id="minWithdraw"></span></p>
     <p>রেফার প্রয়োজন: <span id="requiredReferral"></span></p>
     <select id="paymentMethod">
       <option value="bKash">বিকাশ</option>
@@ -96,7 +96,7 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
       <div class="home-card" style="grid-column: 1/-1;"><h3>রেফার লিংক</h3><p id="refLink" style="word-break:break-all; font-size:12px;"></p></div>
       <div class="home-card"><a id="telegramLink" href="#" target="_blank" style="color:var(--primary-gold); text-decoration:none;">টেলিগ্রাম চ্যানেল</a></div>
       <div class="home-card"><a id="supportLink" href="#" target="_blank" style="color:var(--primary-gold); text-decoration:none;">যোগাযোগ</a></div>
-      <div class="home-card"><h3>ব্যালেন্স</h3><p>৳<span id="mainBalanceProfile">0</span></p></div>
+      <div class="home-card"><h3>ব্যালেন্স</h3><p>$<span id="mainBalanceProfile">0</span></p></div>
     </div>
     <button class="btn" onclick="logout()" style="margin-top:20px; background:#ff4d4d; color:#fff;">লগআউট</button>
   </div>
@@ -116,7 +116,7 @@ tg.expand();
 const CONFIG = {
   DAILY_AD_LIMIT: 15,
   COOLDOWN_HOURS: 12,
-  REQUIRED_REFERRAL: 00,
+  REQUIRED_REFERRAL: 0,
   MIN_WITHDRAW: 1,
   BOT_TOKEN: "8027784844:AAGHfNwr1Yz5gOpTmNJ6OXrFW2X3GiEJLmc",
   ADMIN_ID: "6230555979",
@@ -127,8 +127,7 @@ const CONFIG = {
   MONETAG_ZONE: '10411839'
 };
 
-// ডাটা লোড করা
-let savedData = localStorage.getItem('lite_user_data');
+let savedData = localStorage.getItem('lite_user_data_final');
 let user = savedData ? JSON.parse(savedData) : { 
   name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "", 
   id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest",
@@ -137,15 +136,13 @@ let user = savedData ? JSON.parse(savedData) : {
   adsViewed: 0 
 };
 
-// ডাটা সেভ করার ফাংশন
 function saveData() {
-  localStorage.setItem('lite_user_data', JSON.stringify(user));
+  localStorage.setItem('lite_user_data_final', JSON.stringify(user));
 }
 
 window.onload = () => {
   if(user.name) {
     document.getElementById('username').value = user.name;
-    // যদি আগে থেকেই লগইন করা থাকে তবে সরাসরি অ্যাপে নিয়ে যাবে
     if(savedData) login(true); 
   }
 };
@@ -181,7 +178,7 @@ function updateUI(){
   document.getElementById('adsAvailable').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
   document.getElementById('adsRemaining').innerText = CONFIG.DAILY_AD_LIMIT - user.adsViewed;
   document.getElementById('adsTotal').innerText = CONFIG.DAILY_AD_LIMIT;
-  document.getElementById('refLink').innerText = `https://t.me/LiteIncomeBot?start=${user.id}`;
+  document.getElementById('refLink').innerText = "https://t.me/LiteIncomeBot?start=" + user.id;
 }
 
 function showPage(pageId, btn){
@@ -194,19 +191,17 @@ function showPage(pageId, btn){
 function viewAd(){
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
 
-  // মনিটেগ এড ফাংশন কল
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
       user.balance += 1;
       updateUI();
-      saveData(); // ব্যালেন্স বাড়লে সেভ হবে
+      saveData();
       if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
     }).catch(e => {
         alert("এড লোড হচ্ছে না, আবার চেষ্টা করুন।");
     });
   } else {
-    // শুধুমাত্র টেস্ট করার জন্য যদি এড লোড না হয়
     user.adsViewed++;
     user.balance += 1;
     updateUI();
@@ -220,19 +215,25 @@ function requestWithdraw(){
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
 
   if(!account || isNaN(amount)) return alert("সঠিক তথ্য দিন");
-  if(amount < CONFIG.MIN_WITHDRAW) return alert(`ন্যূনতম উইথড্র ৳{CONFIG.MIN_WITHDRAW}`);
-  if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(`৳{CONFIG.REQUIRED_REFERRAL} টি রেফার প্রয়োজন`);
+  if(amount < CONFIG.MIN_WITHDRAW) return alert("ন্যূনতম উইথড্র $" + CONFIG.MIN_WITHDRAW);
+  if(user.referrals < CONFIG.REQUIRED_REFERRAL) return alert(CONFIG.REQUIRED_REFERRAL + " টি রেফার প্রয়োজন");
   if(amount > user.balance) return alert("ব্যালেন্স পর্যাপ্ত নয়");
 
-  const msg = `💰 উইথড্র রিকোয়েস্ট\nনাম: ৳{user.name}\nআইডি: ৳{user.id}\nমেথড: ৳{method}\nনাম্বার: ৳{account}\nপরিমাণ: ৳৳{amount}`;
+  const msg = "💰 উইথড্র রিকোয়েস্ট\n\n👤 নাম: " + user.name + "\n🆔 আইডি: " + user.id + "\n🏦 মেথড: " + method + "\n📱 নাম্বার: " + account + "\n💵 পরিমাণ: $" + amount;
   
-  fetch(`https://api.telegram.org/bot৳{CONFIG.BOT_TOKEN}/sendMessage?chat_id=৳{CONFIG.ADMIN_ID}&text=৳{encodeURIComponent(msg)}`)
-  .then(() => {
-    alert("রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
-    user.balance -= amount;
-    updateUI();
-    saveData(); // উইথড্রর পর ব্যালেন্স সেভ
-  });
+  const url = "https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/sendMessage?chat_id=" + CONFIG.ADMIN_ID + "&text=" + encodeURIComponent(msg);
+  
+  fetch(url)
+  .then(res => {
+    if(res.ok){
+      alert("✅ রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
+      user.balance -= amount;
+      updateUI();
+      saveData();
+    } else {
+      alert("❌ মেসেজ পাঠাতে সমস্যা হয়েছে। বট স্টার্ট করুন।");
+    }
+  }).catch(() => alert("নেটওয়ার্ক সমস্যা!"));
 }
 
 function startCooldown(){
@@ -250,17 +251,17 @@ function startCooldown(){
     } else {
       let h = Math.floor(diff/3600000);
       let m = Math.floor((diff%3600000)/60000);
-      document.getElementById('cooldownTimer').innerText = `${h}h ${m}m`;
+      document.getElementById('cooldownTimer').innerText = h + "h " + m + "m";
     }
   }, 1000);
 }
 
 function logout(){
   if(confirm("লগআউট করতে চান? ডাটা মুছে যাবে।")){
-    localStorage.removeItem('lite_user_data');
+    localStorage.removeItem('lite_user_data_final');
     location.reload();
   }
 }
 </script>
 </body>
-</html>
+                                                                                 </html>
