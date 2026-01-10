@@ -15,7 +15,7 @@
     --cooldown-text: #000;
 }
 body { margin:0; font-family:sans-serif; background: var(--bg-dark); color: var(--text-light);}
-.container { padding: 15px; padding-bottom: 80px; } /* Navigation এর জন্য স্পেস */
+.container { padding: 15px; padding-bottom: 80px; }
 .card { background: var(--card-bg); padding:15px; margin:10px 0; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.5); }
 .card h2 { color: var(--primary-gold); margin:0 0 10px 0; font-weight:bold; }
 .btn { display:block; background:var(--primary-gold); color:#000; text-align:center; padding:12px; border-radius:10px; margin:10px 0; cursor:pointer; font-weight:bold; transition: all 0.2s ease; border:none; width:100%; font-size:16px; }
@@ -35,7 +35,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
 </style>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>
 
 </head>
@@ -73,7 +72,6 @@ h1.app-title { text-align:center; color: var(--primary-gold); margin-bottom:20px
     <h2>টাস্ক</h2>
     <p>বাকি এড: <span id="adsRemaining"></span> / <span id="adsTotal"></span></p>
     <button class="btn" onclick="viewAd()">এড দেখুন</button>
-    <div id="adContainer" class="card hidden"></div>
   </div>
 
   <div id="withdrawPage" class="page card hidden">
@@ -129,20 +127,34 @@ const CONFIG = {
   MONETAG_ZONE: '10411839'
 };
 
-let user = { 
+// ডাটা লোড করা
+let savedData = localStorage.getItem('lite_user_data');
+let user = savedData ? JSON.parse(savedData) : { 
   name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "", 
   id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest",
-  balance: 0, referrals: 0, adsViewed: 0 
+  balance: 0, 
+  referrals: 0, 
+  adsViewed: 0 
 };
+
+// ডাটা সেভ করার ফাংশন
+function saveData() {
+  localStorage.setItem('lite_user_data', JSON.stringify(user));
+}
 
 window.onload = () => {
-  if(user.name) document.getElementById('username').value = user.name;
+  if(user.name) {
+    document.getElementById('username').value = user.name;
+    // যদি আগে থেকেই লগইন করা থাকে তবে সরাসরি অ্যাপে নিয়ে যাবে
+    if(savedData) login(true); 
+  }
 };
 
-function login(){
-  const name = document.getElementById('username').value;
-  if(name){
-    user.name = name;
+function login(isAuto = false){
+  const nameInput = document.getElementById('username').value;
+  if(nameInput || isAuto){
+    if(!isAuto) user.name = nameInput;
+    saveData();
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     loadConfig();
@@ -182,18 +194,23 @@ function showPage(pageId, btn){
 function viewAd(){
   if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) return alert("আজকের লিমিট শেষ!");
 
+  // মনিটেগ এড ফাংশন কল
   if(typeof show_10411839 === 'function'){
     show_10411839().then(() => {
       user.adsViewed++;
       user.balance += 1;
       updateUI();
+      saveData(); // ব্যালেন্স বাড়লে সেভ হবে
       if(user.adsViewed >= CONFIG.DAILY_AD_LIMIT) startCooldown();
-    }).catch(e => alert("এড লোড হচ্ছে না, আবার চেষ্টা করুন।"));
+    }).catch(e => {
+        alert("এড লোড হচ্ছে না, আবার চেষ্টা করুন।");
+    });
   } else {
-    // টেস্ট করার জন্য (SDK না থাকলে)
+    // শুধুমাত্র টেস্ট করার জন্য যদি এড লোড না হয়
     user.adsViewed++;
     user.balance += 1;
     updateUI();
+    saveData();
   }
 }
 
@@ -214,6 +231,7 @@ function requestWithdraw(){
     alert("রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
     user.balance -= amount;
     updateUI();
+    saveData(); // উইথড্রর পর ব্যালেন্স সেভ
   });
 }
 
@@ -226,6 +244,7 @@ function startCooldown(){
     if(diff <= 0) {
       clearInterval(timer);
       user.adsViewed = 0;
+      saveData();
       document.getElementById('cooldownTimer').innerText = "রেডি";
       updateUI();
     } else {
@@ -236,7 +255,12 @@ function startCooldown(){
   }, 1000);
 }
 
-function logout(){ if(confirm("লগআউট করতে চান?")) location.reload(); }
+function logout(){
+  if(confirm("লগআউট করতে চান? ডাটা মুছে যাবে।")){
+    localStorage.removeItem('lite_user_data');
+    location.reload();
+  }
+}
 </script>
 </body>
-      </html>
+</html>
