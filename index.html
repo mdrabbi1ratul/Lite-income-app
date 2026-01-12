@@ -28,7 +28,6 @@
     .grid-item { background: #0d1117; border: 2px solid #30363d; border-radius: 12px; padding: 15px; text-align: center; }
     .grid-item span { font-size: 14px; color: var(--primary-blue); font-weight: bold; }
     .grid-item p { margin: 8px 0 0; font-size: 20px; font-weight: bold; color: #fff; }
-    .big-history-btn { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid var(--success-green); border-radius: 15px; padding: 20px; margin-top: 15px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 15px; }
     .btn { background: var(--primary-blue); color: #fff; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
     .btn:disabled { background: #1e293b !important; cursor: not-allowed; opacity: 0.7; border: 1px solid #334155; }
     .btn-bonus { background: var(--success-green); }
@@ -84,7 +83,9 @@
 
         <div id="withdraw" class="page">  
             <div class="card">  
-                <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.00</b></span>  
+                <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.00</b></span><br>
+                <small id="minWithdrawText" style="color: var(--warning-yellow); display: block; margin-top: 5px;">মিনিমাম উইথড্র: $0.00</small>
+                
                 <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Recharge</option></select>  
                 <input id="wNumber" placeholder="নম্বর">  
                 <input id="wAmount" type="number" placeholder="পরিমাণ ($)">  
@@ -136,7 +137,8 @@
     const db = firebase.database();
 
     const refBy = new URLSearchParams(window.location.search).get('start');
-    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!" };
+    // মিনিমাম উইথড্র ডিফল্ট ভ্যালু যোগ করা হয়েছে
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00 };
     let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active" };
 
     // সেটিংস এবং নোটিশ লোড
@@ -144,6 +146,8 @@
         if(snap.exists()) {
             appConfig = {...appConfig, ...snap.val()};
             document.getElementById('notice-container').innerText = appConfig.notice || "কোনো নোটিশ নেই।";
+            // উইথড্র পেজে মিনিমাম টেক্সট আপডেট
+            document.getElementById('minWithdrawText').innerText = "মিনিমাম উইথড্র: $" + (appConfig.minWithdraw || 1.00).toFixed(2);
             updateUI();
         }
     });
@@ -274,12 +278,22 @@
 
     function requestWithdraw() {
         const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value;
-        if(!num || isNaN(amt) || amt < 1 || amt > userData.balance) return alert("Invalid!");
+        const minLimit = appConfig.minWithdraw || 1.00; // অ্যাডমিন থেকে আসা লিমিট
+
+        if(!num || isNaN(amt)) return alert("সব তথ্য পূরণ করুন!");
+        if(amt < minLimit) return alert("দুঃখিত! মিনিমাম উইথড্র লিমিট $" + minLimit.toFixed(2));
+        if(amt > userData.balance) return alert("আপনার পর্যাপ্ত ব্যালেন্স নেই! বর্তমান ব্যালেন্স: $" + userData.balance.toFixed(2));
+
         const req = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
         db.ref('withdraws').push(req);
+        
         let hist = userData.history || [];
         hist.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: req.date });
-        db.ref('users/' + userData.uid).update({ balance: userData.balance - amt, history: hist });
+        db.ref('users/' + userData.uid).update({ balance: userData.balance - amt, history: hist }).then(() => {
+            alert("সফলভাবে রিকোয়েস্ট পাঠানো হয়েছে!");
+            document.getElementById('wAmount').value = "";
+            document.getElementById('wNumber').value = "";
+        });
     }
 
     function claimReferBonus() {
@@ -291,7 +305,7 @@
     function renderWithdrawHistory() {
         const list = document.getElementById('withdrawHistoryList');
         if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
-        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
+        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}" style="color:var(--warning-yellow)">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
     }
 
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
@@ -308,4 +322,4 @@
     if(savedUid) db.ref('users/' + savedUid).once('value', snap => { if(snap.exists()) { userData = snap.val(); loginSuccess(); } });
 </script>
 </body>
-                </html>
+    </html>
