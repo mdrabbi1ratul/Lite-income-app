@@ -1,4 +1,5 @@
-<!DOCTYPE html>  <html lang="bn">  
+<!DOCTYPE html>  
+<html lang="bn">  
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
@@ -55,8 +56,8 @@
                 <input type="password" id="auth-pass" placeholder="পাসওয়ার্ড">  
                 <span class="toggle-pass" onclick="togglePassword()">SHOW</span>  
             </div>  
-            <button class="btn" onclick="handleAuth()">Login Now</button>  
-            <p id="auth-toggle" style="font-size: 14px; margin-top: 15px;">Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span></p>  
+            <button class="btn" id="auth-btn" onclick="handleAuth()">Login Now</button>  
+            <p id="auth-toggle-text" style="font-size: 14px; margin-top: 15px;">Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span></p>  
         </div>  
     </div>  
 
@@ -132,7 +133,7 @@
     </div>
 
 <script>
-    // --- ফায়ারবেস কনফিগ (আপনার এডমিন প্যানেলের সাথে মিল রেখে) ---
+    // --- ফায়ারবেস কনফিগ ---
     const firebaseConfig = {
         apiKey: "AIzaSyD_umGq2C78hRinwHGl9SNVFuZzb12iooc",
         databaseURL: "https://lite-income-f6287-default-rtdb.firebaseio.com/",
@@ -141,61 +142,72 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // অ্যাডমিন সেটিংস স্টোর করার জন্য
-    let appConfig = {
-        adLimit: 15,
-        adInterval: 10,
-        cooldownMins: 720, // ১২ ঘণ্টা
-        referReward: 0.10,
-        dailyBonus: 0.05
-    };
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05 };
+    let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], referCount: 0, email: "", password: "", status: "Active" };
 
-    let userData = JSON.parse(localStorage.getItem('lite_user')) || {  
-        uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, history: [], referCount: 0, email: "", status: "Active"
-    };
-
-    // অ্যাডমিন প্যানেল থেকে লাইভ সেটিংস লোড করা
-    db.ref('app_config').on('value', (snap) => {
-        if(snap.exists()) {
-            const data = snap.val();
-            appConfig.adLimit = parseInt(data.adLimit) || 15;
-            appConfig.cooldownMins = parseInt(data.cooldownMins) || 720;
-            appConfig.referReward = parseFloat(data.referReward) || 0.10;
-            appConfig.dailyBonus = parseFloat(data.dailyBonus) || 0.05;
-            updateUI();
-        }
+    // অ্যাডমিন সেটিংস লোড
+    db.ref('app_config').on('value', snap => {
+        if(snap.exists()) appConfig = {...appConfig, ...snap.val()};
+        updateUI();
     });
 
+    // অথেন্টিকেশন মোড পরিবর্তন
+    function toggleAuth() {
+        const title = document.getElementById('auth-title');
+        const btn = document.getElementById('auth-btn');
+        const toggleText = document.getElementById('auth-toggle-text');
+        if (title.innerText === "Login") {
+            title.innerText = "Sign Up";
+            btn.innerText = "Register Now";
+            toggleText.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>';
+        } else {
+            title.innerText = "Login";
+            btn.innerText = "Login Now";
+            toggleText.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>';
+        }
+    }
+
+    // লগইন ও সাইন-আপ হ্যান্ডলার
     function handleAuth() {
-        const email = document.getElementById('auth-email').value;
-        if(email.length < 5) { alert("সঠিক তথ্য দিন"); return; }
-        
-        // ইমেইল থেকে একটি ইউনিক আইডি তৈরি (Firebase-এর জন্য)
-        userData.uid = btoa(email).replace(/=/g, "").substring(0, 15);
-        userData.email = email;
-        
-        // ফায়ারবেসে ইউজার চেক/রেজিস্ট্রেশন
-        db.ref('users/' + userData.uid).once('value', (snap) => {
-            if(snap.exists()){
-                userData = snap.val();
-            } else {
-                db.ref('users/' + userData.uid).set(userData);
-            }
-            saveData();
-            loginSuccess();
-        });
+        const email = document.getElementById('auth-email').value.trim();
+        const pass = document.getElementById('auth-pass').value.trim();
+        const mode = document.getElementById('auth-title').innerText;
+
+        if (!email || !pass) { alert("সবগুলো ঘর পূরণ করুন!"); return; }
+        const uid = btoa(email).replace(/=/g, "").substring(0, 15);
+
+        if (mode === "Sign Up") {
+            db.ref('users/' + uid).once('value', snap => {
+                if (snap.exists()) {
+                    alert("এই ইমেইল দিয়ে অলরেডি অ্যাকাউন্ট আছে!");
+                } else {
+                    userData.uid = uid;
+                    userData.email = email;
+                    userData.password = pass;
+                    db.ref('users/' + uid).set(userData).then(() => {
+                        alert("রেজিস্ট্রেশন সফল! এখন লগইন করুন।");
+                        toggleAuth();
+                    });
+                }
+            });
+        } else {
+            db.ref('users/' + uid).once('value', snap => {
+                if (snap.exists() && snap.val().password === pass) {
+                    userData = snap.val();
+                    saveData();
+                    loginSuccess();
+                } else {
+                    alert("ভুল ইমেইল অথবা পাসওয়ার্ড!");
+                }
+            });
+        }
     }
 
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        updateUI();
-        // লাইভ ব্যালেন্স আপডেট লিসেনার
         db.ref('users/' + userData.uid).on('value', snap => {
-            if(snap.exists()){
-                userData = snap.val();
-                updateUI();
-            }
+            if(snap.exists()) { userData = snap.val(); updateUI(); }
         });
     }
 
@@ -209,43 +221,34 @@
         document.getElementById('pRefCount').innerText = userData.referCount || 0;
         document.getElementById('hCompleteAds').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
         document.getElementById('tLimit').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
-        document.getElementById('hTaskAvail').innerText = appConfig.adLimit;
         document.getElementById('refLinkText').innerText = "https://t.me/YourLiteIncomeBot?start=" + userData.uid;
         
+        // ডেইলি বোনাস বাটন চেক
+        const dailyBtn = document.getElementById('dailyBtn');
+        const lastDaily = userData.lastDaily || 0;
+        if (new Date().toDateString() === new Date(lastDaily).toDateString()) {
+            dailyBtn.disabled = true;
+            dailyBtn.innerText = "Already Claimed Today";
+            dailyBtn.style.background = "#e74c3c"; // লাল হয়ে যাবে
+        } else {
+            dailyBtn.disabled = false;
+            dailyBtn.innerText = "Daily Bonus";
+            dailyBtn.style.background = "#2ecc71";
+        }
         checkCooldowns();
         renderWithdrawHistory();
     }
 
-    function checkCooldowns() {
-        const now = Date.now();
-        const adBtn = document.getElementById('adBtn');
-        const timerText = document.getElementById('main-timer');
-        const titleText = document.getElementById('cd-title');
-
-        if (userData.taskLockTime && now < userData.taskLockTime) {
-            adBtn.disabled = true;
-            timerText.classList.add('timer-locked');
-            titleText.innerText = "Task Cooldown Active ⏳";
-            startTaskCountdown(userData.taskLockTime);
-            return;
-        } else if (userData.taskLockTime && now >= userData.taskLockTime) {
-            userData.ads = 0;
-            userData.taskLockTime = 0;
-            timerText.classList.remove('timer-locked');
-            saveData();
-            db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
-        }
-
-        const timeSinceLastAd = (now - (userData.lastAdTime || 0)) / 1000;
-        if (timeSinceLastAd < 10) { // ১০ সেকেন্ড বিরতি
-            adBtn.disabled = true;
-            let remaining = Math.ceil(10 - timeSinceLastAd);
-            adBtn.innerText = "Wait " + remaining + "s";
-            setTimeout(checkCooldowns, 1000);
+    function claimDailyBonus() {
+        if (typeof show_10411839 === 'function') {
+            show_10411839().then(() => {
+                userData.balance += appConfig.dailyBonus;
+                userData.lastDaily = Date.now();
+                db.ref('users/' + userData.uid).update({ balance: userData.balance, lastDaily: userData.lastDaily });
+                alert("Daily Bonus Added!");
+            });
         } else {
-            adBtn.disabled = false;
-            adBtn.innerText = "Watch Ad";
-            timerText.innerText = "00:00:00";
+            alert("Ads not loaded. Try again.");
         }
     }
 
@@ -253,70 +256,35 @@
         if (userData.status === "Banned") { alert("You are banned!"); return; }
         if (userData.ads >= appConfig.adLimit) return;
         if (typeof show_10411839 === 'function') {
-            show_10411839().then(() => rewardUser());
-        } else { rewardUser(); }
-    }
-
-    function rewardUser() {
-        userData.balance = (userData.balance || 0) + 0.01;
-        userData.ads = (userData.ads || 0) + 1;
-        userData.lastAdTime = Date.now();
-
-        if (userData.ads >= appConfig.adLimit) {
-            userData.taskLockTime = Date.now() + (appConfig.cooldownMins * 60 * 1000);
-            alert("Limit reached! Come back later.");
+            show_10411839().then(() => {
+                userData.balance += 0.01;
+                userData.ads += 1;
+                userData.lastAdTime = Date.now();
+                if (userData.ads >= appConfig.adLimit) {
+                    userData.taskLockTime = Date.now() + (appConfig.cooldownMins * 60 * 1000);
+                }
+                db.ref('users/' + userData.uid).update({ balance: userData.balance, ads: userData.ads, lastAdTime: userData.lastAdTime, taskLockTime: userData.taskLockTime || 0 });
+            });
         }
-        saveData();
-        db.ref('users/' + userData.uid).update(userData);
     }
 
-    function requestWithdraw() {
-        const amt = parseFloat(document.getElementById('wAmount').value);
-        const method = document.getElementById('wMethod').value;
-        const num = document.getElementById('wNumber').value;
-
-        if(!num || amt < 1 || amt > userData.balance) { alert("Invalid Request!"); return; }
-
-        const request = {
-            email: userData.email,
-            amount: amt,
-            method: method,
-            number: num,
-            status: "Pending",
-            date: new Date().toLocaleString()
-        };
-
-        db.ref('withdraws').push(request);
-        userData.balance -= amt;
-        userData.history.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: request.date });
-        
-        db.ref('users/' + userData.uid).update({ 
-            balance: userData.balance, 
-            history: userData.history 
-        });
-        saveData();
-        alert("Withdrawal request sent to Admin!");
+    // --- অন্যান্য সাপোর্ট ফাংশন ---
+    function checkCooldowns() {
+        const now = Date.now();
+        const adBtn = document.getElementById('adBtn');
+        const timerText = document.getElementById('main-timer');
+        if (userData.taskLockTime && now < userData.taskLockTime) {
+            adBtn.disabled = true;
+            startTaskCountdown(userData.taskLockTime);
+        } else {
+            if(userData.taskLockTime) {
+                db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
+            }
+            adBtn.disabled = false;
+            timerText.innerText = "00:00:00";
+        }
     }
 
-    function claimReferBonus() {
-        if((userData.referCount || 0) <= 0) { alert("No referrals!"); return; }
-        
-        const claim = {
-            refByEmail: userData.email,
-            refByUid: userData.uid,
-            newUserEmail: "System Referral",
-            status: "Pending",
-            date: new Date().toLocaleString()
-        };
-
-        db.ref('refer_claims').push(claim);
-        userData.referCount -= 1;
-        db.ref('users/' + userData.uid).update({ referCount: userData.referCount });
-        saveData();
-        alert("Claim request sent! Admin will approve soon.");
-    }
-
-    // --- অন্যান্য সাধারণ ফাংশন (অপরিবর্তিত) ---
     function startTaskCountdown(lockTime) {
         if(window.taskInterval) clearInterval(window.taskInterval);
         window.taskInterval = setInterval(() => {
@@ -329,8 +297,29 @@
         }, 1000);
     }
 
+    function requestWithdraw() {
+        const amt = parseFloat(document.getElementById('wAmount').value);
+        const method = document.getElementById('wMethod').value;
+        const num = document.getElementById('wNumber').value;
+        if(!num || isNaN(amt) || amt < 1 || amt > userData.balance) { alert("Invalid Request!"); return; }
+        const request = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
+        db.ref('withdraws').push(request);
+        userData.balance -= amt;
+        if(!userData.history) userData.history = [];
+        userData.history.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: request.date });
+        db.ref('users/' + userData.uid).update({ balance: userData.balance, history: userData.history });
+        alert("Withdrawal request sent!");
+    }
+
+    function claimReferBonus() {
+        if((userData.referCount || 0) <= 0) { alert("No referrals!"); return; }
+        db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, newUserEmail: "Referral Claim", status: "Pending", date: new Date().toLocaleString() });
+        userData.referCount -= 1;
+        db.ref('users/' + userData.uid).update({ referCount: userData.referCount });
+        alert("Claim request sent!");
+    }
+
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
-    function toggleAuth() { let title = document.getElementById('auth-title'); title.innerText = title.innerText === "Login" ? "Sign Up" : "Login"; }
     function showPage(id, el) { 
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(id).classList.add('active-page');
@@ -343,10 +332,16 @@
         if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
         list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
     }
-    function saveData() { localStorage.setItem('lite_user', JSON.stringify(userData)); }
+    function saveData() { localStorage.setItem('lite_user_id', userData.uid); }
     function logout() { localStorage.clear(); location.reload(); }
 
-    if(userData.email) { loginSuccess(); }
+    // অটো লগইন চেক
+    const savedUid = localStorage.getItem('lite_user_id');
+    if(savedUid) {
+        db.ref('users/' + savedUid).once('value', snap => {
+            if(snap.exists()) { userData = snap.val(); loginSuccess(); }
+        });
+    }
 </script>
 </body>
     </html>
