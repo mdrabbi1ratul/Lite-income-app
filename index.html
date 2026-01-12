@@ -9,7 +9,6 @@
     <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>  
 
 <style>
-    /* আপনার দেওয়া সকল CSS ডিজাইন হুবহু এখানে থাকবে (অপরিবর্তিত) */
     :root { --primary-blue: #3498db; --dark-bg: #0a0b10; --card-bg: #161b22; --text-white: #e6edf3; --accent-red: #e74c3c; --success-green: #2ecc71; --warning-yellow: #f1c40f; }
     body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: var(--text-white); padding: 15px; padding-bottom: 100px; user-select: none; }
     .nav-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: rgba(22, 27, 34, 0.95); display: flex; justify-content: space-around; padding: 12px 5px; border-radius: 25px; border: 1px solid rgba(52, 152, 219, 0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(10px); }
@@ -34,18 +33,11 @@
     .btn:disabled { background: #1e293b !important; cursor: not-allowed; opacity: 0.7; border: 1px solid #334155; }
     .btn-bonus { background: var(--success-green); }
     input, select { width: 100%; padding: 12px; margin: 10px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 8px; box-sizing: border-box; }
-    .hist-list { margin-top: 15px; text-align: left; }
     .hist-item { background: #0d1117; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--primary-blue); display: flex; justify-content: space-between; align-items: center; }
-    .status-pending { color: var(--warning-yellow); font-weight: bold; font-size: 12px; }
-    .status-paid { color: var(--success-green); font-weight: bold; font-size: 12px; }
-    .status-rejected { color: var(--accent-red); font-weight: bold; font-size: 12px; }
     .ref-box { background: #0d1117; border-radius: 10px; padding: 15px; margin-top: 10px; border: 1px dashed var(--primary-blue); word-break: break-all; font-size: 12px; color: var(--warning-yellow); }  
-    .cooldown-wrapper { background: #0d1117; border-radius: 12px; padding: 15px; margin-top: 15px; border: 1px solid #30363d; }
-    .cooldown-title { font-size: 12px; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
     .timer-display { font-family: 'Courier New', monospace; font-size: 28px; font-weight: bold; color: var(--success-green); text-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
-    .timer-locked { color: var(--accent-red); text-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+    .notice-box { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-yellow); color: var(--warning-yellow); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; font-size: 14px; }
 </style>
-
 </head>  
 <body>  
     <div id="auth-page">  
@@ -63,9 +55,9 @@
 
     <div id="main-content" style="display: none;">  
         <div id="home" class="page active-page">  
+            <div id="notice-container" class="notice-box">Loading notice...</div>
             <div class="card">  
                 <h4 id="uName">স্বাগতম!</h4>  
-                <span style="font-size: 14px;">মেইন ব্যালেন্স</span>  
                 <div class="main-bal" id="hBal">$0.00</div>  
             </div>  
             <div class="grid">  
@@ -73,13 +65,14 @@
                 <div class="grid-item"><span>সফল রেফার</span><p id="hRefCount">0</p></div>  
                 <div class="grid-item" style="grid-column: span 2;"><span>টোটাল এড ভিউ</span><p id="hCompleteAds">0 / 0</p></div>  
             </div>  
-            <div class="big-history-btn" onclick="showPage('withdraw', document.querySelectorAll('.nav-item')[2])">📊 <h3>View History</h3></div>  
+            <h3 style="margin-top:20px; text-align:left; border-left:3px solid var(--success-green); padding-left:10px;">ডেইলি এক্টিভিটি</h3>
+            <div id="dailyActivityList" class="hist-list"></div>
         </div>  
 
         <div id="task" class="page">  
             <div class="card">ব্যালেন্স: <b id="tBal" style="color:var(--primary-blue)">$0.00</b></div>  
-            <div class="cooldown-wrapper">
-                <div class="cooldown-title" id="cd-title">Next Task Availability</div>
+            <div class="card" style="background:#0d1117">
+                <div style="font-size:12px; color:gray; margin-bottom:5px">NEXT TASK IN</div>
                 <div class="timer-display" id="main-timer">00:00:00</div>
             </div>
             <button id="dailyBtn" class="btn btn-bonus" onclick="claimDailyBonus()">Daily Bonus</button>  
@@ -105,8 +98,7 @@
             <div class="card">  
                 <h3 style="color:var(--primary-blue)">প্রোফাইল</h3>  
                 <p id="pEmail" style="color:gray"></p>  
-                <hr style="border:0.5px solid #333">  
-                <div class="ref-box" id="refLinkText">বট লিংক তৈরি হচ্ছে...</div>  
+                <div class="ref-box" id="refLinkText">লিঙ্ক তৈরি হচ্ছে...</div>  
                 <button class="btn" onclick="copyRef()">Copy Link</button>  
                 <div style="margin-top:20px; border: 1px solid #30363d; padding:15px; border-radius:12px;">  
                     <span>পেন্ডিং রেফার: <b id="pRefCount" style="color:var(--warning-yellow)">0</b></span><br>  
@@ -116,24 +108,25 @@
             </div>  
         </div>  
 
-        <div id="support" class="page">  
-            <div class="card">  
-                <h3>সহযোগিতা প্রয়োজন?</h3>  
-                <button class="btn" style="background: #0088cc;" onclick="window.open('https://t.me/YourLiteIncomeBot')">Join Telegram Channel</button>  
-            </div>  
-        </div>  
+        <div id="support" class="page">
+            <div class="card">
+                <h3 style="color:var(--primary-blue)">সার্পোট সেকশন</h3>
+                <p>যেকোনো সমস্যায় আমাদের টেলিগ্রামে যোগাযোগ করুন।</p>
+                <button class="btn" style="background:#0088cc" onclick="window.open('https://t.me/YourChannel')">Join Telegram Channel</button>
+                <button class="btn" style="background:#2481cc; margin-top:10px" onclick="window.open('https://t.me/YourAdmin')">Contact Admin</button>
+            </div>
+        </div>
 
         <div class="nav-bar">  
             <div class="nav-item active" onclick="showPage('home', this)"><span>🏠</span>Home</div>  
             <div class="nav-item" onclick="showPage('task', this)"><span>🎯</span>Task</div>  
             <div class="nav-item" onclick="showPage('withdraw', this)"><span>💰</span>Withdraw</div>  
             <div class="nav-item" onclick="showPage('profile', this)"><span>👤</span>Profile</div>  
-            <div class="nav-item" onclick="showPage('support', this)"><span>🎧</span>Support</div>  
+            <div class="nav-item" onclick="showPage('support', this)"><span>🎧</span>Support</div>
         </div>  
     </div>
 
 <script>
-    // --- ফায়ারবেস কনফিগ ---
     const firebaseConfig = {
         apiKey: "AIzaSyD_umGq2C78hRinwHGl9SNVFuZzb12iooc",
         databaseURL: "https://lite-income-f6287-default-rtdb.firebaseio.com/",
@@ -142,63 +135,51 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05 };
-    let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], referCount: 0, email: "", password: "", status: "Active" };
+    const refBy = new URLSearchParams(window.location.search).get('start');
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!" };
+    let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active" };
 
-    // অ্যাডমিন সেটিংস লোড
+    // সেটিংস এবং নোটিশ লোড
     db.ref('app_config').on('value', snap => {
-        if(snap.exists()) appConfig = {...appConfig, ...snap.val()};
-        updateUI();
+        if(snap.exists()) {
+            appConfig = {...appConfig, ...snap.val()};
+            document.getElementById('notice-container').innerText = appConfig.notice || "কোনো নোটিশ নেই।";
+            updateUI();
+        }
     });
 
-    // অথেন্টিকেশন মোড পরিবর্তন
     function toggleAuth() {
-        const title = document.getElementById('auth-title');
-        const btn = document.getElementById('auth-btn');
-        const toggleText = document.getElementById('auth-toggle-text');
+        const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text');
         if (title.innerText === "Login") {
-            title.innerText = "Sign Up";
-            btn.innerText = "Register Now";
-            toggleText.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>';
+            title.innerText = "Sign Up"; btn.innerText = "Register Now";
+            text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>';
         } else {
-            title.innerText = "Login";
-            btn.innerText = "Login Now";
-            toggleText.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>';
+            title.innerText = "Login"; btn.innerText = "Login Now";
+            text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>';
         }
     }
 
-    // লগইন ও সাইন-আপ হ্যান্ডলার
     function handleAuth() {
-        const email = document.getElementById('auth-email').value.trim();
-        const pass = document.getElementById('auth-pass').value.trim();
-        const mode = document.getElementById('auth-title').innerText;
-
-        if (!email || !pass) { alert("সবগুলো ঘর পূরণ করুন!"); return; }
+        const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value.trim(), mode = document.getElementById('auth-title').innerText;
+        if (!email || !pass) return alert("সব পূরণ করুন!");
         const uid = btoa(email).replace(/=/g, "").substring(0, 15);
 
         if (mode === "Sign Up") {
             db.ref('users/' + uid).once('value', snap => {
-                if (snap.exists()) {
-                    alert("এই ইমেইল দিয়ে অলরেডি অ্যাকাউন্ট আছে!");
-                } else {
-                    userData.uid = uid;
-                    userData.email = email;
-                    userData.password = pass;
+                if (snap.exists()) alert("Account exists!");
+                else {
+                    userData.uid = uid; userData.email = email; userData.password = pass;
                     db.ref('users/' + uid).set(userData).then(() => {
-                        alert("রেজিস্ট্রেশন সফল! এখন লগইন করুন।");
-                        toggleAuth();
+                        if(refBy) db.ref('users/' + refBy + '/referCount').set(firebase.database.ServerValue.increment(1));
+                        alert("Success!"); toggleAuth();
                     });
                 }
             });
         } else {
             db.ref('users/' + uid).once('value', snap => {
                 if (snap.exists() && snap.val().password === pass) {
-                    userData = snap.val();
-                    saveData();
-                    loginSuccess();
-                } else {
-                    alert("ভুল ইমেইল অথবা পাসওয়ার্ড!");
-                }
+                    userData = snap.val(); localStorage.setItem('lite_user_id', uid); loginSuccess();
+                } else alert("Wrong credentials!");
             });
         }
     }
@@ -206,9 +187,7 @@
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        db.ref('users/' + userData.uid).on('value', snap => {
-            if(snap.exists()) { userData = snap.val(); updateUI(); }
-        });
+        db.ref('users/' + userData.uid).on('value', snap => { if(snap.exists()) { userData = snap.val(); updateUI(); } });
     }
 
     function updateUI() {
@@ -221,102 +200,98 @@
         document.getElementById('pRefCount').innerText = userData.referCount || 0;
         document.getElementById('hCompleteAds').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
         document.getElementById('tLimit').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
-        document.getElementById('refLinkText').innerText = "https://t.me/YourLiteIncomeBot?start=" + userData.uid;
+        document.getElementById('refLinkText').innerText = window.location.origin + window.location.pathname + "?start=" + userData.uid;
         
-        // ডেইলি বোনাস বাটন চেক
-        const dailyBtn = document.getElementById('dailyBtn');
-        const lastDaily = userData.lastDaily || 0;
-        if (new Date().toDateString() === new Date(lastDaily).toDateString()) {
-            dailyBtn.disabled = true;
-            dailyBtn.innerText = "Already Claimed Today";
-            dailyBtn.style.background = "#e74c3c"; // লাল হয়ে যাবে
+        const dBtn = document.getElementById('dailyBtn');
+        if (new Date().toDateString() === new Date(userData.lastDaily || 0).toDateString()) {
+            dBtn.disabled = true; dBtn.innerText = "Claimed"; dBtn.style.background = "#e74c3c";
         } else {
-            dailyBtn.disabled = false;
-            dailyBtn.innerText = "Daily Bonus";
-            dailyBtn.style.background = "#2ecc71";
+            dBtn.disabled = false; dBtn.innerText = "Daily Bonus"; dBtn.style.background = "#2ecc71";
         }
         checkCooldowns();
         renderWithdrawHistory();
+        renderDailyActivity();
     }
 
     function claimDailyBonus() {
         if (typeof show_10411839 === 'function') {
             show_10411839().then(() => {
-                userData.balance += appConfig.dailyBonus;
-                userData.lastDaily = Date.now();
-                db.ref('users/' + userData.uid).update({ balance: userData.balance, lastDaily: userData.lastDaily });
-                alert("Daily Bonus Added!");
+                const today = new Date().toDateString();
+                let activity = userData.dailyActivity || {};
+                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
+                activity[today].bonus += 1;
+                activity[today].income += appConfig.dailyBonus;
+                db.ref('users/' + userData.uid).update({ balance: userData.balance + appConfig.dailyBonus, lastDaily: Date.now(), dailyActivity: activity });
             });
-        } else {
-            alert("Ads not loaded. Try again.");
         }
     }
 
     function playAd() {
-        if (userData.status === "Banned") { alert("You are banned!"); return; }
-        if (userData.ads >= appConfig.adLimit) return;
+        if (userData.ads >= appConfig.adLimit) return alert("Limit Over!");
         if (typeof show_10411839 === 'function') {
             show_10411839().then(() => {
-                userData.balance += 0.01;
-                userData.ads += 1;
-                userData.lastAdTime = Date.now();
-                if (userData.ads >= appConfig.adLimit) {
-                    userData.taskLockTime = Date.now() + (appConfig.cooldownMins * 60 * 1000);
-                }
-                db.ref('users/' + userData.uid).update({ balance: userData.balance, ads: userData.ads, lastAdTime: userData.lastAdTime, taskLockTime: userData.taskLockTime || 0 });
+                const today = new Date().toDateString();
+                let activity = userData.dailyActivity || {};
+                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
+                activity[today].ads += 1;
+                activity[today].income += 0.01;
+                let updates = { balance: userData.balance + 0.01, ads: userData.ads + 1, lastAdTime: Date.now(), dailyActivity: activity };
+                if (updates.ads >= appConfig.adLimit) updates.taskLockTime = Date.now() + (appConfig.cooldownMins * 60000);
+                db.ref('users/' + userData.uid).update(updates);
             });
         }
     }
 
-    // --- অন্যান্য সাপোর্ট ফাংশন ---
+    function renderDailyActivity() {
+        const list = document.getElementById('dailyActivityList');
+        if (!userData.dailyActivity) return;
+        const sorted = Object.keys(userData.dailyActivity).reverse();
+        list.innerHTML = sorted.slice(0, 5).map(date => {
+            const d = userData.dailyActivity[date];
+            return `<div class="hist-item"><div><b>${date}</b><br><small>Ads: ${d.ads} | Bonus: ${d.bonus}</small></div><div style="color:var(--success-green)">+$${d.income.toFixed(3)}</div></div>`;
+        }).join('');
+    }
+
     function checkCooldowns() {
-        const now = Date.now();
-        const adBtn = document.getElementById('adBtn');
-        const timerText = document.getElementById('main-timer');
+        const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer');
         if (userData.taskLockTime && now < userData.taskLockTime) {
-            adBtn.disabled = true;
-            startTaskCountdown(userData.taskLockTime);
+            adBtn.disabled = true; startTaskCountdown(userData.taskLockTime);
         } else {
-            if(userData.taskLockTime) {
-                db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
-            }
-            adBtn.disabled = false;
-            timerText.innerText = "00:00:00";
+            if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
+            adBtn.disabled = false; timerText.innerText = "00:00:00";
         }
     }
 
-    function startTaskCountdown(lockTime) {
+    function startTaskCountdown(lock) {
         if(window.taskInterval) clearInterval(window.taskInterval);
         window.taskInterval = setInterval(() => {
-            const diff = lockTime - Date.now();
+            const diff = lock - Date.now();
             if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; }
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
+            const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
             document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
         }, 1000);
     }
 
     function requestWithdraw() {
-        const amt = parseFloat(document.getElementById('wAmount').value);
-        const method = document.getElementById('wMethod').value;
-        const num = document.getElementById('wNumber').value;
-        if(!num || isNaN(amt) || amt < 1 || amt > userData.balance) { alert("Invalid Request!"); return; }
-        const request = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
-        db.ref('withdraws').push(request);
-        userData.balance -= amt;
-        if(!userData.history) userData.history = [];
-        userData.history.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: request.date });
-        db.ref('users/' + userData.uid).update({ balance: userData.balance, history: userData.history });
-        alert("Withdrawal request sent!");
+        const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value;
+        if(!num || isNaN(amt) || amt < 1 || amt > userData.balance) return alert("Invalid!");
+        const req = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
+        db.ref('withdraws').push(req);
+        let hist = userData.history || [];
+        hist.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: req.date });
+        db.ref('users/' + userData.uid).update({ balance: userData.balance - amt, history: hist });
     }
 
     function claimReferBonus() {
-        if((userData.referCount || 0) <= 0) { alert("No referrals!"); return; }
-        db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, newUserEmail: "Referral Claim", status: "Pending", date: new Date().toLocaleString() });
-        userData.referCount -= 1;
-        db.ref('users/' + userData.uid).update({ referCount: userData.referCount });
-        alert("Claim request sent!");
+        if((userData.referCount || 0) <= 0) return alert("No referrals!");
+        db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() });
+        db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 });
+    }
+
+    function renderWithdrawHistory() {
+        const list = document.getElementById('withdrawHistoryList');
+        if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
+        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
     }
 
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
@@ -326,22 +301,11 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
     }
-    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Link Copied!"); }
-    function renderWithdrawHistory() {
-        const list = document.getElementById('withdrawHistoryList');
-        if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
-        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
-    }
-    function saveData() { localStorage.setItem('lite_user_id', userData.uid); }
+    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Copied!"); }
     function logout() { localStorage.clear(); location.reload(); }
 
-    // অটো লগইন চেক
     const savedUid = localStorage.getItem('lite_user_id');
-    if(savedUid) {
-        db.ref('users/' + savedUid).once('value', snap => {
-            if(snap.exists()) { userData = snap.val(); loginSuccess(); }
-        });
-    }
+    if(savedUid) db.ref('users/' + savedUid).once('value', snap => { if(snap.exists()) { userData = snap.val(); loginSuccess(); } });
 </script>
 </body>
-    </html>
+                </html>
