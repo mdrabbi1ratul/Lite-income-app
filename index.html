@@ -1,156 +1,130 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lite Income Admin - Referral Pro</title>
-    
+<!DOCTYPE html>  
+<html lang="bn">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Lite Income - Professional App</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>  
 
-    <style>
-        /* আপনার অরিজিনাল ডিজাইন - একদম আনটাচড */
-        :root { --primary: #00d2ff; --bg: #0a0b10; --sidebar-bg: #0d1117; --card: #161b22; --text: #e6edf3; --danger: #ff4b2b; --success: #00f2fe; --sidebar-width: 280px; }
-        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-        
-        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .login-card { background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid var(--primary); width: 100%; max-width: 350px; text-align: center; }
+<style>
+    :root { --primary-blue: #3498db; --dark-bg: #0a0b10; --card-bg: #161b22; --text-white: #e6edf3; --accent-red: #e74c3c; --success-green: #2ecc71; --warning-yellow: #f1c40f; }
+    body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: var(--text-white); padding: 15px; padding-bottom: 100px; user-select: none; }
+    .nav-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: rgba(22, 27, 34, 0.95); display: flex; justify-content: space-around; padding: 12px 5px; border-radius: 25px; border: 1px solid rgba(52, 152, 219, 0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(10px); }
+    .nav-item { color: #8b949e; font-size: 11px; text-align: center; cursor: pointer; flex: 1; transition: all 0.3s ease; font-weight: 500; }
+    .nav-item span { font-size: 20px; display: block; margin-bottom: 2px; transition: 0.3s; }
+    .nav-item.active { color: #fff; transform: translateY(-8px); }
+    .nav-item.active span { transform: scale(1.3); text-shadow: 0 0 15px var(--primary-blue); }
+    #auth-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+    .pass-container { position: relative; width: 100%; }
+    .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--primary-blue); font-size: 12px; font-weight: bold; }
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .active-page { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .card { background: var(--card-bg); border: 1px solid var(--primary-blue); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 15px; }
+    .main-bal { font-size: 42px; font-weight: bold; color: var(--primary-blue); margin: 10px 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-item { background: #0d1117; border: 2px solid #30363d; border-radius: 12px; padding: 15px; text-align: center; }
+    .grid-item span { font-size: 14px; color: var(--primary-blue); font-weight: bold; }
+    .grid-item p { margin: 8px 0 0; font-size: 20px; font-weight: bold; color: #fff; }
+    .btn { background: var(--primary-blue); color: #fff; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    .btn:disabled { background: #1e293b !important; cursor: not-allowed; opacity: 0.7; border: 1px solid #334155; }
+    .btn-bonus { background: var(--success-green); }
+    input, select { width: 100%; padding: 12px; margin: 10px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 8px; box-sizing: border-box; }
+    .hist-item { background: #0d1117; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--primary-blue); display: flex; justify-content: space-between; align-items: center; }
+    .ref-box { background: #0d1117; border-radius: 10px; padding: 15px; margin-top: 10px; border: 1px dashed var(--primary-blue); word-break: break-all; font-size: 12px; color: var(--warning-yellow); }  
+    .timer-display { font-family: 'Courier New', monospace; font-size: 28px; font-weight: bold; color: var(--success-green); text-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+    .notice-box { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-yellow); color: var(--warning-yellow); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; font-size: 14px; }
+</style>
+</head>  
+<body>  
+    <div id="auth-page">  
+        <div class="card" style="width: 100%; max-width: 400px;">  
+            <h2 id="auth-title" style="color: var(--primary-blue);">Login</h2>  
+            <input type="email" id="auth-email" placeholder="আপনার ইমেইল">  
+            <div class="pass-container">  
+                <input type="password" id="auth-pass" placeholder="পাসওয়ার্ড">  
+                <span class="toggle-pass" onclick="togglePassword()">SHOW</span>  
+            </div>  
+            <button class="btn" id="auth-btn" onclick="handleAuth()">Login Now</button>  
+            <p id="auth-toggle-text" style="font-size: 14px; margin-top: 15px;">Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span></p>  
+        </div>  
+    </div>  
 
-        .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100%; background: var(--sidebar-bg); padding: 25px; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 10000; transform: translateX(-105%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; }
-        .sidebar.active { transform: translateX(0); }
-        .side-link { padding: 14px; cursor: pointer; border-radius: 10px; margin-top: 10px; color: #8b949e; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
-        .side-link:hover, .side-link.active { background: rgba(0, 210, 255, 0.1); color: var(--primary); }
-        .header-bar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: var(--sidebar-bg); display: flex; align-items: center; padding: 0 20px; z-index: 999; border-bottom: 1px solid #30363d; justify-content: space-between; }
-        .toggle-btn { background: var(--primary); color: #000; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 9999; backdrop-filter: blur(4px); }
-        .overlay.active { display: block; }
-        .main { flex-grow: 1; padding: 80px 20px 40px 20px; overflow-y: auto; width: 100%; }
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid #30363d; margin-bottom: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #0d1117; padding: 20px; border-radius: 10px; border-top: 3px solid var(--primary); text-align: center; }
-        .search-box { width: 100%; padding: 12px; margin-bottom: 15px; background: #0d1117; border: 1px solid var(--primary); color: white; border-radius: 8px; }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #30363d; font-size: 14px; }
-        .status-active { color: var(--success); font-weight: bold; }
-        .status-banned { color: var(--danger); font-weight: bold; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 8px; box-sizing: border-box;}
-        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; background: var(--primary); color: #000; margin-right: 5px; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-success { background: var(--success); color: #000; }
-        .section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
-</head>
-<body>
+    <div id="main-content" style="display: none;">  
+        <div id="home" class="page active-page">  
+            <div id="notice-container" class="notice-box">Loading notice...</div>
+            <div class="card">  
+                <h4 id="uName">স্বাগতম!</h4>  
+                <div class="main-bal" id="hBal">$0.00</div>  
+            </div>  
+            <div class="grid">  
+                <div class="grid-item"><span>টুডে টাস্ক</span><p id="hTaskAvail">0</p></div>  
+                <div class="grid-item"><span>সফল রেফার</span><p id="hRefCount">0</p></div>  
+                <div class="grid-item" style="grid-column: span 2;"><span>টোটাল এড ভিউ</span><p id="hCompleteAds">0 / 0</p></div>  
+            </div>  
+            <h3 style="margin-top:20px; text-align:left; border-left:3px solid var(--success-green); padding-left:10px;">ডেইলি এক্টিভিটি</h3>
+            <div id="dailyActivityList" class="hist-list"></div>
+        </div>  
 
-    <div id="login-overlay">
-        <div class="login-card">
-            <h2 style="color: var(--primary);">Admin Login</h2>
-            <input type="text" id="adminUser" placeholder="Username">
-            <input type="password" id="adminPass" placeholder="Password">
-            <button class="btn" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="checkLogin()">Login Now</button>
-        </div>
-    </div>
-
-    <div id="admin-panel" style="display: none; width: 100%;">
-        <div class="header-bar">
-            <button class="toggle-btn" onclick="toggleMenu()">☰ MENU</button>
-            <h3 id="topTitle" style="color: var(--primary);">Lite Income Control</h3>
-        </div>
-
-        <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-        <div class="sidebar" id="sidebar">
-            <h2 style="color:var(--primary); text-align:center;">LITE CONTROL</h2>
-            <div class="side-link active" onclick="showSection('dash', this)">📊 ওভারভিউ</div>
-            <div class="side-link" onclick="showSection('users', this)">👥 ইউজার লিস্ট</div>
-            <div class="side-link" onclick="showSection('referSection', this)">🎁 রেফার রিকোয়েস্ট</div>
-            <div class="side-link" onclick="showSection('payments', this)">💰 পেমেন্ট রিকোয়েস্ট</div>
-            <div class="side-link" onclick="showSection('settings', this)">⚙️ অ্যাপ সেটিংস</div>
-            <div class="side-link" style="margin-top: auto; color: var(--danger);" onclick="logout()">🔒 লগ আউট</div>
-        </div>
-
-        <div class="main" id="main-ui">
-            <div id="dash" class="section active-section">
-                <div class="stats-grid">
-                    <div class="stat-card"><span>মোট ইউজার</span><h3 id="statTotalUsers">0</h3></div>
-                    <div class="stat-card"><span>পেন্ডিং রেফার</span><h3 id="statPendingRef">0</h3></div>
-                    <div class="stat-card"><span>পেন্ডিং পেমেন্ট</span><h3 id="statPendingPay">0</h3></div>
-                    <div class="stat-card"><span>ইউজার ব্যালেন্স</span><h3 id="statTotalPoints">$0.00</h3></div>
-                </div>
+        <div id="task" class="page">  
+            <div class="card">ব্যালেন্স: <b id="tBal" style="color:var(--primary-blue)">$0.00</b></div>  
+            <div class="card" style="background:#0d1117">
+                <div style="font-size:12px; color:gray; margin-bottom:5px">NEXT TASK IN</div>
+                <div class="timer-display" id="main-timer">00:00:00</div>
             </div>
+            <button id="dailyBtn" class="btn btn-bonus" onclick="claimDailyBonus()">Daily Bonus</button>  
+            <div class="card" style="margin-top:15px; border-style:dashed;">  
+                <button id="adBtn" class="btn" onclick="playAd()">Watch Ad</button>  
+                <p id="tLimit" style="margin-top:10px;">0 / 0</p>
+            </div>  
+        </div>  
 
-            <div id="users" class="section">
-                <input type="text" class="search-box" id="userSearch" onkeyup="searchUser()" placeholder="ইমেইল দিয়ে ইউজার সার্চ করুন...">
-                <div class="card table-container">
-                    <table>
-                        <thead>
-                            <tr><th>ইমেইল</th><th>ব্যালেন্স</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr>
-                        </thead>
-                        <tbody id="userTableBody"></tbody>
-                    </table>
-                </div>
+        <div id="withdraw" class="page">  
+            <div class="card">  
+                <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.00</b></span><br>
+                <small id="minWithdrawText" style="color: var(--warning-yellow); display: block; margin-top: 5px;">মিনিমাম উইথড্র: $0.00</small>
+                
+                <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Recharge</option></select>  
+                <input id="wNumber" placeholder="নম্বর">  
+                <input id="wAmount" type="number" placeholder="পরিমাণ ($)">  
+                <button class="btn" onclick="requestWithdraw()">Request Withdraw</button>  
             </div>
+            <h3 style="padding-left:10px; border-left:3px solid var(--primary-blue);">লেনদেন হিস্ট্রি</h3>
+            <div class="hist-list" id="withdrawHistoryList"></div>
+        </div>  
 
-            <div id="referSection" class="section">
-                <h2 style="color:var(--primary)">পেন্ডিং রেফার বোনাস ক্লেইম</h2>
-                <div class="card table-container">
-                    <table>
-                        <thead>
-                            <tr><th>রেফারকারী (Email)</th><th>তারিখ</th><th>অ্যাকশন</th></tr>
-                        </thead>
-                        <tbody id="referTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
+        <div id="profile" class="page">  
+            <div class="card">  
+                <h3 style="color:var(--primary-blue)">প্রোফাইল</h3>  
+                <p id="pEmail" style="color:gray"></p>  
+                <div class="ref-box" id="refLinkText">লিঙ্ক তৈরি হচ্ছে...</div>  
+                <button class="btn" onclick="copyRef()">Copy Link</button>  
+                <div style="margin-top:20px; border: 1px solid #30363d; padding:15px; border-radius:12px;">  
+                    <span>পেন্ডিং রেফার: <b id="pRefCount" style="color:var(--warning-yellow)">0</b></span><br>  
+                    <button class="btn btn-bonus" onclick="claimReferBonus()">Claim Bonus</button>  
+                </div>  
+                <button class="btn" style="background:var(--accent-red); margin-top:30px;" onclick="logout()">Logout</button>  
+            </div>  
+        </div>  
 
-            <div id="payments" class="section">
-                <h2 style="color:var(--primary)">পেন্ডিং উইথড্র রিকোয়েস্ট</h2>
-                <div class="card table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Email</th><th>Amount</th><th>Method</th><th>Phone</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="payTable"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="settings" class="section">
-                <div class="card" style="max-width: 600px;">
-                    <h2 style="margin-top: 0; color: var(--primary);">Global App Settings</h2>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div><label>Refer Reward ($)</label><input type="number" id="referReward" step="0.01"></div>
-                        <div><label>Daily Bonus ($)</label><input type="number" id="dailyBonus" step="0.01"></div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
-                        <div><label>Min Withdraw ($)</label><input type="number" id="minWithdraw" step="0.01"></div>
-                        <div><label>Ad Limit (Total)</label><input type="number" id="adLimit"></div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
-                        <div><label>Ad View Reward ($)</label><input type="number" id="adReward" step="0.001" placeholder="যেমন: 0.005"></div>
-                        <div><label>Cooldown (Mins)</label><input type="number" id="cooldownMins"></div>
-                    </div>
-                    <label style="display:block; margin-top:10px;">App Notice (হোম পেজে দেখাবে)</label>
-                    <textarea id="appNotice" rows="3"></textarea>
-                    <button class="btn btn-success" style="width:100%; margin-top:20px; padding: 15px;" onclick="saveConfig()">SAVE ALL SETTINGS</button>
-                </div>
+        <div id="support" class="page">
+            <div class="card">
+                <h3 style="color:var(--primary-blue)">সার্পোট সেকশন</h3>
+                <p>যেকোনো সমস্যায় আমাদের টেলিগ্রামে যোগাযোগ করুন।</p>
+                <button class="btn" style="background:#0088cc" onclick="window.open('https://t.me/YourChannel')">Join Telegram Channel</button>
+                <button class="btn" style="background:#2481cc; margin-top:10px" onclick="window.open('https://t.me/YourAdmin')">Contact Admin</button>
             </div>
         </div>
-    </div>
 
-    <div id="editModal" class="overlay" style="display: none; justify-content: center; align-items: center; z-index: 20000;">
-        <div class="card" style="width: 90%; max-width: 400px; background: var(--sidebar-bg);">
-            <h3 id="editEmailTitle" style="color:var(--primary)">Edit User</h3>
-            <label>ব্যালেন্স আপডেট করুন ($)</label>
-            <input type="number" id="editBalInp" step="0.01" placeholder="যেমন: 0.50 বা -0.50">
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-success" style="flex: 1;" onclick="updateUserBalance()">Update</button>
-                <button class="btn btn-danger" style="flex: 1;" onclick="closeEditModal()">Close</button>
-            </div>
-        </div>
+        <div class="nav-bar">  
+            <div class="nav-item active" onclick="showPage('home', this)"><span>🏠</span>Home</div>  
+            <div class="nav-item" onclick="showPage('task', this)"><span>🎯</span>Task</div>  
+            <div class="nav-item" onclick="showPage('withdraw', this)"><span>💰</span>Withdraw</div>  
+            <div class="nav-item" onclick="showPage('profile', this)"><span>👤</span>Profile</div>  
+            <div class="nav-item" onclick="showPage('support', this)"><span>🎧</span>Support</div>
+        </div>  
     </div>
 
 <script>
@@ -162,162 +136,190 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let currentEditingUid = "";
-    let globalReferBonus = 0.10;
+    const refBy = new URLSearchParams(window.location.search).get('start');
+    // মিনিমাম উইথড্র ডিফল্ট ভ্যালু যোগ করা হয়েছে
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00 };
+    let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active" };
 
-    function checkLogin() {
-        const u = document.getElementById('adminUser').value;
-        const p = document.getElementById('adminPass').value;
-        if(u === "admin" && p === "12345") {
-            sessionStorage.setItem("admin_auth", "true");
-            startAdmin();
-        } else { alert("ভুল তথ্য!"); }
-    }
+    // সেটিংস এবং নোটিশ লোড
+    db.ref('app_config').on('value', snap => {
+        if(snap.exists()) {
+            appConfig = {...appConfig, ...snap.val()};
+            document.getElementById('notice-container').innerText = appConfig.notice || "কোনো নোটিশ নেই।";
+            // উইথড্র পেজে মিনিমাম টেক্সট আপডেট
+            document.getElementById('minWithdrawText').innerText = "মিনিমাম উইথড্র: $" + (appConfig.minWithdraw || 1.00).toFixed(2);
+            updateUI();
+        }
+    });
 
-    function startAdmin() {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'block';
-        loadAllData();
-    }
-
-    if(sessionStorage.getItem("admin_auth") === "true") startAdmin();
-
-    function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('active');
-        document.getElementById('overlay').classList.toggle('active');
-    }
-
-    function showSection(id, element) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-        document.getElementById(id).classList.add('active-section');
-        document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
-        element.classList.add('active');
-        if(window.innerWidth < 1000) toggleMenu();
-    }
-
-    function loadAllData() {
-        db.ref('users').on('value', snap => {
-            let count = 0; let totalBal = 0; let html = "";
-            snap.forEach(child => {
-                const u = child.val(); count++; totalBal += (u.balance || 0);
-                const statusClass = u.status === 'Banned' ? 'status-banned' : 'status-active';
-                html += `<tr><td>${u.email}</td><td>$${(u.balance || 0).toFixed(2)}</td><td class="${statusClass}">${u.status || 'Active'}</td><td><button class="btn" onclick="openEditModal('${child.key}', '${u.email}')">Edit</button><button class="btn btn-danger" onclick="toggleBan('${child.key}', '${u.status}')">${u.status === 'Banned' ? 'Unban' : 'Ban'}</button></td></tr>`;
-            });
-            document.getElementById('statTotalUsers').innerText = count;
-            document.getElementById('statTotalPoints').innerText = "$" + totalBal.toFixed(2);
-            document.getElementById('userTableBody').innerHTML = html;
-        });
-
-        db.ref('refer_claims').on('value', snap => {
-            let pending = 0; let html = "";
-            snap.forEach(child => {
-                const r = child.val();
-                if(r.status === "Pending") {
-                    pending++;
-                    html += `<tr><td>${r.refByEmail}</td><td>${r.date}</td><td><button class="btn btn-success" onclick="approveRefer('${child.key}', '${r.refByUid}')">Approve</button><button class="btn btn-danger" onclick="rejectRefer('${child.key}')">Reject</button></td></tr>`;
-                }
-            });
-            document.getElementById('statPendingRef').innerText = pending;
-            document.getElementById('referTableBody').innerHTML = html;
-        });
-
-        db.ref('withdraws').on('value', snap => {
-            let pending = 0; let html = "";
-            snap.forEach(child => {
-                const w = child.val();
-                if(w.status === "Pending") {
-                    pending++;
-                    html += `<tr><td>${w.email}</td><td>$${w.amount}</td><td>${w.method}</td><td>${w.number}</td><td><button class="btn btn-success" onclick="approvePay('${child.key}')">Done</button></td></tr>`;
-                }
-            });
-            document.getElementById('statPendingPay').innerText = pending;
-            document.getElementById('payTable').innerHTML = html;
-        });
-
-        db.ref('app_config').on('value', snap => {
-            const c = snap.val();
-            if(c) {
-                document.getElementById('minWithdraw').value = c.minWithdraw || 1.00;
-                document.getElementById('adLimit').value = c.adLimit || 15;
-                document.getElementById('adReward').value = c.adReward || 0.005;
-                document.getElementById('dailyBonus').value = c.dailyBonus || 0.05;
-                document.getElementById('referReward').value = c.referReward || 0.10;
-                document.getElementById('cooldownMins').value = c.cooldownMins || 720;
-                document.getElementById('appNotice').value = c.notice || "";
-                globalReferBonus = parseFloat(c.referReward) || 0.10;
-            }
-        });
-    }
-
-    function saveConfig() {
-        const adLimit = parseInt(document.getElementById('adLimit').value) || 0;
-        const adReward = parseFloat(document.getElementById('adReward').value) || 0;
-        const dailyBonus = parseFloat(document.getElementById('dailyBonus').value) || 0;
-        const referReward = parseFloat(document.getElementById('referReward').value) || 0;
-        const minWithdraw = parseFloat(document.getElementById('minWithdraw').value) || 0;
-        const cooldownMins = parseInt(document.getElementById('cooldownMins').value) || 0;
-        const notice = document.getElementById('appNotice').value || "";
-
-        db.ref('app_config').update({
-            minWithdraw: minWithdraw,
-            adLimit: adLimit,
-            adReward: adReward,
-            dailyBonus: dailyBonus,
-            referReward: referReward,
-            cooldownMins: cooldownMins,
-            notice: notice
-        })
-        .then(() => {
-            alert("সব সেটিংস সফলভাবে সেভ হয়েছে!");
-        })
-        .catch((error) => {
-            alert("এরর: " + error.message);
-        });
-    }
-
-    function approveRefer(key, uid) {
-        db.ref('users/' + uid + '/balance').transaction(b => (b || 0) + globalReferBonus);
-        db.ref('refer_claims/' + key).update({ status: 'Approved' });
-    }
-
-    function rejectRefer(key) { db.ref('refer_claims/' + key).remove(); }
-
-    function approvePay(key) { 
-        if(confirm("Mark as Paid?")) db.ref('withdraws/' + key).update({ status: "Paid" }); 
-    }
-
-    function toggleBan(uid, status) {
-        db.ref('users/' + uid).update({ status: status === 'Banned' ? 'Active' : 'Banned' });
-    }
-
-    function openEditModal(uid, email) {
-        currentEditingUid = uid;
-        document.getElementById('editEmailTitle').innerText = email;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-    
-    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
-    function updateUserBalance() {
-        const amt = parseFloat(document.getElementById('editBalInp').value);
-        if(isNaN(amt)) return;
-        db.ref('users/' + currentEditingUid + '/balance').transaction(b => (b || 0) + amt)
-        .then(() => { alert("Done!"); closeEditModal(); });
-    }
-
-    function searchUser() {
-        let input = document.getElementById('userSearch').value.toUpperCase();
-        let tr = document.getElementById("userTableBody").getElementsByTagName("tr");
-        for (let i = 0; i < tr.length; i++) {
-            let td = tr[i].getElementsByTagName("td")[0];
-            if (td) {
-                let txtValue = td.textContent || td.innerText;
-                tr[i].style.display = txtValue.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
+    function toggleAuth() {
+        const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text');
+        if (title.innerText === "Login") {
+            title.innerText = "Sign Up"; btn.innerText = "Register Now";
+            text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>';
+        } else {
+            title.innerText = "Login"; btn.innerText = "Login Now";
+            text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>';
         }
     }
 
-    function logout() { sessionStorage.clear(); location.reload(); }
+    function handleAuth() {
+        const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value.trim(), mode = document.getElementById('auth-title').innerText;
+        if (!email || !pass) return alert("সব পূরণ করুন!");
+        const uid = btoa(email).replace(/=/g, "").substring(0, 15);
+
+        if (mode === "Sign Up") {
+            db.ref('users/' + uid).once('value', snap => {
+                if (snap.exists()) alert("Account exists!");
+                else {
+                    userData.uid = uid; userData.email = email; userData.password = pass;
+                    db.ref('users/' + uid).set(userData).then(() => {
+                        if(refBy) db.ref('users/' + refBy + '/referCount').set(firebase.database.ServerValue.increment(1));
+                        alert("Success!"); toggleAuth();
+                    });
+                }
+            });
+        } else {
+            db.ref('users/' + uid).once('value', snap => {
+                if (snap.exists() && snap.val().password === pass) {
+                    userData = snap.val(); localStorage.setItem('lite_user_id', uid); loginSuccess();
+                } else alert("Wrong credentials!");
+            });
+        }
+    }
+
+    function loginSuccess() {
+        document.getElementById('auth-page').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        db.ref('users/' + userData.uid).on('value', snap => { if(snap.exists()) { userData = snap.val(); updateUI(); } });
+    }
+
+    function updateUI() {
+        const bal = (userData.balance || 0).toFixed(2);
+        document.getElementById('hBal').innerText = "$" + bal;
+        document.getElementById('tBal').innerText = "$" + bal;
+        document.getElementById('wBal').innerText = "$" + bal;
+        document.getElementById('pEmail').innerText = userData.email;
+        document.getElementById('hRefCount').innerText = userData.referCount || 0;
+        document.getElementById('pRefCount').innerText = userData.referCount || 0;
+        document.getElementById('hCompleteAds').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
+        document.getElementById('tLimit').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
+        document.getElementById('refLinkText').innerText = window.location.origin + window.location.pathname + "?start=" + userData.uid;
+        
+        const dBtn = document.getElementById('dailyBtn');
+        if (new Date().toDateString() === new Date(userData.lastDaily || 0).toDateString()) {
+            dBtn.disabled = true; dBtn.innerText = "Claimed"; dBtn.style.background = "#e74c3c";
+        } else {
+            dBtn.disabled = false; dBtn.innerText = "Daily Bonus"; dBtn.style.background = "#2ecc71";
+        }
+        checkCooldowns();
+        renderWithdrawHistory();
+        renderDailyActivity();
+    }
+
+    function claimDailyBonus() {
+        if (typeof show_10411839 === 'function') {
+            show_10411839().then(() => {
+                const today = new Date().toDateString();
+                let activity = userData.dailyActivity || {};
+                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
+                activity[today].bonus += 1;
+                activity[today].income += appConfig.dailyBonus;
+                db.ref('users/' + userData.uid).update({ balance: userData.balance + appConfig.dailyBonus, lastDaily: Date.now(), dailyActivity: activity });
+            });
+        }
+    }
+
+    function playAd() {
+        if (userData.ads >= appConfig.adLimit) return alert("Limit Over!");
+        if (typeof show_10411839 === 'function') {
+            show_10411839().then(() => {
+                const today = new Date().toDateString();
+                let activity = userData.dailyActivity || {};
+                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
+                activity[today].ads += 1;
+                activity[today].income += 0.01;
+                let updates = { balance: userData.balance + 0.01, ads: userData.ads + 1, lastAdTime: Date.now(), dailyActivity: activity };
+                if (updates.ads >= appConfig.adLimit) updates.taskLockTime = Date.now() + (appConfig.cooldownMins * 60000);
+                db.ref('users/' + userData.uid).update(updates);
+            });
+        }
+    }
+
+    function renderDailyActivity() {
+        const list = document.getElementById('dailyActivityList');
+        if (!userData.dailyActivity) return;
+        const sorted = Object.keys(userData.dailyActivity).reverse();
+        list.innerHTML = sorted.slice(0, 5).map(date => {
+            const d = userData.dailyActivity[date];
+            return `<div class="hist-item"><div><b>${date}</b><br><small>Ads: ${d.ads} | Bonus: ${d.bonus}</small></div><div style="color:var(--success-green)">+$${d.income.toFixed(3)}</div></div>`;
+        }).join('');
+    }
+
+    function checkCooldowns() {
+        const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer');
+        if (userData.taskLockTime && now < userData.taskLockTime) {
+            adBtn.disabled = true; startTaskCountdown(userData.taskLockTime);
+        } else {
+            if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
+            adBtn.disabled = false; timerText.innerText = "00:00:00";
+        }
+    }
+
+    function startTaskCountdown(lock) {
+        if(window.taskInterval) clearInterval(window.taskInterval);
+        window.taskInterval = setInterval(() => {
+            const diff = lock - Date.now();
+            if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; }
+            const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+            document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        }, 1000);
+    }
+
+    function requestWithdraw() {
+        const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value;
+        const minLimit = appConfig.minWithdraw || 1.00; // অ্যাডমিন থেকে আসা লিমিট
+
+        if(!num || isNaN(amt)) return alert("সব তথ্য পূরণ করুন!");
+        if(amt < minLimit) return alert("দুঃখিত! মিনিমাম উইথড্র লিমিট $" + minLimit.toFixed(2));
+        if(amt > userData.balance) return alert("আপনার পর্যাপ্ত ব্যালেন্স নেই! বর্তমান ব্যালেন্স: $" + userData.balance.toFixed(2));
+
+        const req = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
+        db.ref('withdraws').push(req);
+        
+        let hist = userData.history || [];
+        hist.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: req.date });
+        db.ref('users/' + userData.uid).update({ balance: userData.balance - amt, history: hist }).then(() => {
+            alert("সফলভাবে রিকোয়েস্ট পাঠানো হয়েছে!");
+            document.getElementById('wAmount').value = "";
+            document.getElementById('wNumber').value = "";
+        });
+    }
+
+    function claimReferBonus() {
+        if((userData.referCount || 0) <= 0) return alert("No referrals!");
+        db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() });
+        db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 });
+    }
+
+    function renderWithdrawHistory() {
+        const list = document.getElementById('withdrawHistoryList');
+        if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
+        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}" style="color:var(--warning-yellow)">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
+    }
+
+    function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
+    function showPage(id, el) { 
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        document.getElementById(id).classList.add('active-page');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
+    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Copied!"); }
+    function logout() { localStorage.clear(); location.reload(); }
+
+    const savedUid = localStorage.getItem('lite_user_id');
+    if(savedUid) db.ref('users/' + savedUid).once('value', snap => { if(snap.exists()) { userData = snap.val(); loginSuccess(); } });
 </script>
 </body>
-                            </html>
+            </html>
