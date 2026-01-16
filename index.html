@@ -2,7 +2,7 @@
 <html lang="bn">  
 <head>  
     <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
     <title>Lite Income - Professional App</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -11,18 +11,58 @@
 <style>
     :root { --primary-blue: #3498db; --dark-bg: #0a0b10; --card-bg: #161b22; --text-white: #e6edf3; --accent-red: #e74c3c; --success-green: #2ecc71; --warning-yellow: #f1c40f; }
     body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: var(--text-white); padding: 15px; padding-bottom: 100px; user-select: none; }
+    
+    /* --- উন্নত স্ট্রিক ডিজাইন --- */
+    .streak-container { display: flex; justify-content: center; margin-bottom: -15px; position: relative; z-index: 10; }
+    .streak-badge { 
+        background: linear-gradient(135deg, #ff9d00, #ff5e00); 
+        color: white; 
+        padding: 6px 18px; 
+        border-radius: 50px; 
+        font-weight: 800; 
+        font-size: 14px; 
+        display: flex; 
+        align-items: center; 
+        gap: 8px; 
+        box-shadow: 0 4px 15px rgba(255, 94, 0, 0.4); 
+        border: 2px solid rgba(255,255,255,0.2);
+        animation: pulse-glow 2s infinite;
+    }
+    @keyframes pulse-glow {
+        0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 94, 0, 0.4); }
+        50% { transform: scale(1.05); box-shadow: 0 4px 25px rgba(255, 94, 0, 0.6); }
+        100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 94, 0, 0.4); }
+    }
+    .streak-text { letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+
+    /* Captcha Style */
+    #captchaCode { font-size: 32px; letter-spacing: 10px; font-weight: bold; color: #fff; background: #1c2128; padding: 15px; border-radius: 8px; border: 1px dashed var(--primary-blue); user-select: none; margin: 15px 0; text-align: center; }
+    #captchaInput { text-align: center; font-size: 18px; text-transform: uppercase; letter-spacing: 5px; border: 2px solid #30363d; }
+    #captchaTimer { color: var(--warning-yellow); font-weight: bold; font-size: 18px; margin: 10px 0; display: none; }
+
+    .ref-box { background: #0d1117; padding: 12px; border-radius: 8px; border: 1px solid #30363d; font-size: 11px; color: #8b949e; margin: 15px 0; word-break: break-all; white-space: normal; line-height: 1.4; }
     .nav-bar { position: fixed; bottom: 15px; left: 10px; right: 10px; background: rgba(22, 27, 34, 0.95); display: flex; justify-content: space-around; padding: 12px 5px; border-radius: 25px; border: 1px solid rgba(52, 152, 219, 0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(10px); }
     .nav-item { color: #8b949e; font-size: 11px; text-align: center; cursor: pointer; flex: 1; transition: all 0.3s ease; font-weight: 500; }
     .nav-item span { font-size: 20px; display: block; margin-bottom: 2px; transition: 0.3s; }
     .nav-item.active { color: #fff; transform: translateY(-8px); }
     .nav-item.active span { transform: scale(1.3); text-shadow: 0 0 15px var(--primary-blue); }
+
+    .rank-card { background: linear-gradient(135deg, #161b22, #0d1117); border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .rank-number { width: 30px; height: 30px; border-radius: 50%; background: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; margin-right: 15px; }
+    .rank-1 { border: 1.5px solid var(--warning-yellow); }
+    .rank-1 .rank-number { background: var(--warning-yellow); color: #000; }
+
+    .menu-item { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.3s; }
+    .menu-item:active { background: #1c2128; }
+
     #auth-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+    #ban-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: white; }
     .pass-container { position: relative; width: 100%; }
     .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--primary-blue); font-size: 12px; font-weight: bold; }
     .page { display: none; animation: fadeIn 0.3s ease; }
     .active-page { display: block; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .card { background: var(--card-bg); border: 1px solid var(--primary-blue); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 15px; }
+    .card { background: var(--card-bg); border: 1px solid var(--primary-blue); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 15px; position: relative; }
     .main-bal { font-size: 42px; font-weight: bold; color: var(--primary-blue); margin: 10px 0; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .grid-item { background: #0d1117; border: 2px solid #30363d; border-radius: 12px; padding: 15px; text-align: center; }
@@ -33,12 +73,17 @@
     .btn-bonus { background: var(--success-green); }
     input, select { width: 100%; padding: 12px; margin: 10px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 8px; box-sizing: border-box; }
     .hist-item { background: #0d1117; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--primary-blue); display: flex; justify-content: space-between; align-items: center; }
-    .ref-box { background: #0d1117; border-radius: 10px; padding: 15px; margin-top: 10px; border: 1px dashed var(--primary-blue); word-break: break-all; font-size: 12px; color: var(--warning-yellow); }  
     .timer-display { font-family: 'Courier New', monospace; font-size: 28px; font-weight: bold; color: var(--success-green); text-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
     .notice-box { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-yellow); color: var(--warning-yellow); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; font-size: 14px; }
 </style>
 </head>  
 <body>  
+    <div id="ban-page">
+        <h1 style="color:var(--accent-red); font-size: 40px;">🚫 BANNED</h1>
+        <p style="margin: 20px 0;">অতিরিক্ত ইনভ্যালিড ক্লিকের কারণে আপনার অ্যাকাউন্টটি ব্যান করা হয়েছে।</p>
+        <button class="btn" onclick="window.open('https://t.me/YourAdmin')">Contact Admin</button>
+    </div>
+
     <div id="auth-page">  
         <div class="card" style="width: 100%; max-width: 400px;">  
             <h2 id="auth-title" style="color: var(--primary-blue);">Login</h2>  
@@ -55,10 +100,20 @@
     <div id="main-content" style="display: none;">  
         <div id="home" class="page active-page">  
             <div id="notice-container" class="notice-box">Loading notice...</div>
-            <div class="card">  
+            
+            <div class="streak-container">
+                <div class="streak-badge">
+                    <span>🔥</span>
+                    <span class="streak-text"><span id="hStreak">0</span> দিনের স্ট্রিক</span>
+                </div>
+            </div>
+
+            <div class="card" style="padding-top: 30px;">
                 <h4 id="uName">স্বাগতম!</h4>  
-                <div class="main-bal" id="hBal">$0.00</div>  
+                <div class="main-bal" id="hBal">$0.000</div>  
+                <p id="hInvalidUI" style="color:var(--accent-red); font-size:12px; font-weight:bold; margin:0;">Invalid Click: 0 / 3</p>
             </div>  
+
             <div class="grid">  
                 <div class="grid-item"><span>টুডে টাস্ক</span><p id="hTaskAvail">0</p></div>  
                 <div class="grid-item"><span>সফল রেফার</span><p id="hRefCount">0</p></div>  
@@ -68,24 +123,41 @@
             <div id="dailyActivityList" class="hist-list"></div>
         </div>  
 
+        <div id="rank" class="page">
+            <h3 style="text-align: center; color: var(--primary-blue);">🏆 Top 10 Earners</h3>
+            <div id="leaderboardList"><p style="text-align:center;">লিডারবোর্ড লোড হচ্ছে...</p></div>
+        </div>
+
         <div id="task" class="page">  
-            <div class="card">ব্যালেন্স: <b id="tBal" style="color:var(--primary-blue)">$0.00</b></div>  
+            <div class="card">ব্যালেন্স: <b id="tBal" style="color:var(--primary-blue)">$0.000</b></div>  
             <div class="card" style="background:#0d1117">
                 <div style="font-size:12px; color:gray; margin-bottom:5px">NEXT TASK IN</div>
                 <div class="timer-display" id="main-timer">00:00:00</div>
             </div>
             <button id="dailyBtn" class="btn btn-bonus" onclick="claimDailyBonus()">Daily Bonus</button>  
+            
+            <button id="openCaptchaBtn" class="btn" style="background: linear-gradient(to right, #3498db, #2980b9); color: #fff; margin-top:15px;" onclick="openCaptcha()">🤖 Play Captcha Entry</button>
+
+            <div id="captchaPanel" class="card" style="display:none; margin-top:15px; background: #0d1117; border: 2px solid var(--primary-blue);">
+                <span style="font-weight: bold; color: var(--primary-blue);">🤖 Verify Captcha</span>
+                <div id="captchaCode">GENERATING...</div>
+                <div id="captchaTimer">Next in: 00s</div>
+                <input type="text" id="captchaInput" placeholder="টাইপ করুন">
+                <p id="sLimit" style="font-size: 13px; color: var(--text-white);">Tasks: 0 / 0</p>
+                <button id="captchaBtn" class="btn" onclick="verifyCaptcha()">SUBMIT CAPTCHA</button>
+                <button class="btn" style="background:transparent; border:1px solid gray; font-size:12px;" onclick="document.getElementById('captchaPanel').style.display='none'; document.getElementById('openCaptchaBtn').style.display='block'">Close</button>
+            </div>
+
             <div class="card" style="margin-top:15px; border-style:dashed;">  
                 <button id="adBtn" class="btn" onclick="playAd()">Watch Ad</button>  
-                <p id="tLimit" style="margin-top:10px;">0 / 0</p>
+                <p id="tLimit" style="margin-top:10px;">Ads: 0 / 0</p>
             </div>  
         </div>  
 
         <div id="withdraw" class="page">  
             <div class="card">  
-                <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.00</b></span><br>
+                <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.000</b></span><br>
                 <small id="minWithdrawText" style="color: var(--warning-yellow); display: block; margin-top: 5px;">মিনিমাম উইথড্র: $0.00</small>
-                
                 <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Recharge</option></select>  
                 <input id="wNumber" placeholder="নম্বর">  
                 <input id="wAmount" type="number" placeholder="পরিমাণ ($)">  
@@ -97,35 +169,43 @@
 
         <div id="profile" class="page">  
             <div class="card">  
-                <h3 style="color:var(--primary-blue)">প্রোফাইল</h3>  
-                <p id="pEmail" style="color:gray"></p>  
-                <div class="ref-box" id="refLinkText">লিঙ্ক তৈরি হচ্ছে...</div>  
-                <button class="btn" onclick="copyRef()">Copy Link</button>  
-                <div style="margin-top:20px; border: 1px solid #30363d; padding:15px; border-radius:12px;">  
-                    <span>পেন্ডিং রেফার: <b id="pRefCount" style="color:var(--warning-yellow)">0</b></span><br>  
-                    <button class="btn btn-bonus" onclick="claimReferBonus()">Claim Bonus</button>  
-                </div>  
-                <button class="btn" style="background:var(--accent-red); margin-top:30px;" onclick="logout()">Logout</button>  
-            </div>  
-        </div>  
-
-        <div id="support" class="page">
-            <div class="card">
-                <h3 style="color:var(--primary-blue)">সার্পোট সেকশন</h3>
-                <p>যেকোনো সমস্যায় আমাদের টেলিগ্রামে যোগাযোগ করুন।</p>
-                <button class="btn" style="background:#0088cc" onclick="window.open('https://t.me/YourChannel')">Join Telegram Channel</button>
-                <button class="btn" style="background:#2481cc; margin-top:10px" onclick="window.open('https://t.me/YourAdmin')">Contact Admin</button>
+                <h3 style="color:var(--primary-blue); margin-bottom:5px;">প্রোফাইল</h3>  
+                <p id="pEmail" style="color:gray; font-size: 14px; margin-bottom:15px;"></p>  
+                <div class="ref-box" id="refLinkText" style="font-size:10px;">লিঙ্ক তৈরি হচ্ছে...</div>  
+                <button class="btn" onclick="copyRef()" style="padding:10px; font-size:12px;">Copy Link</button> 
             </div>
+            <div class="menu-item" onclick="showPage('refer_claim', this)">
+                <span>👥 রেফারেল বোনাস ক্লেইম (পেন্ডিং: <b id="pRefCount" style="color:var(--warning-yellow)">0</b>)</span>
+                <span>➔</span>
+            </div>
+            <div class="menu-item" onclick="window.open('https://t.me/YourChannel')">
+                <span>🎧 সাপোর্ট চ্যানেল (Telegram)</span>
+                <span>➔</span>
+            </div>
+            <div class="menu-item" onclick="window.open('https://t.me/YourAdmin')">
+                <span>💬 কন্টাক্ট অ্যাডমিন</span>
+                <span>➔</span>
+            </div>
+            <button class="btn" style="background:var(--accent-red); margin-top:20px;" onclick="logout()">Logout</button>  
         </div>
 
-        <div class="nav-bar">  
-            <div class="nav-item active" onclick="showPage('home', this)"><span>🏠</span>Home</div>  
-            <div class="nav-item" onclick="showPage('task', this)"><span>🎯</span>Task</div>  
-            <div class="nav-item" onclick="showPage('withdraw', this)"><span>💰</span>Withdraw</div>  
-            <div class="nav-item" onclick="showPage('profile', this)"><span>👤</span>Profile</div>  
-            <div class="nav-item" onclick="showPage('support', this)"><span>🎧</span>Support</div>
-        </div>  
+        <div id="refer_claim" class="page">
+            <button onclick="showPage('profile', this)" style="background:none; border:none; color:var(--primary-blue); cursor:pointer; margin-bottom:15px;">⬅ Back to Profile</button>
+            <div class="card">
+                <h3>Referral Bonus</h3>
+                <p>পেন্ডিং রেফার: <b id="pRefCountClaim" style="color:var(--warning-yellow)">0</b></p>
+                <button class="btn btn-bonus" onclick="claimReferBonus()">Claim Now</button>
+            </div>
+        </div>
     </div>
+
+    <div class="nav-bar">  
+        <div class="nav-item active" onclick="showPage('home', this)"><span>🏠</span>Home</div>  
+        <div class="nav-item" onclick="showPage('rank', this)"><span>🏆</span>Rank</div> 
+        <div class="nav-item" onclick="showPage('task', this)"><span>🎯</span>Task</div>  
+        <div class="nav-item" onclick="showPage('withdraw', this)"><span>💰</span>Withdraw</div>  
+        <div class="nav-item" onclick="showPage('profile', this)"><span>👤</span>Profile</div>  
+    </div>  
 
 <script>
     const firebaseConfig = {
@@ -137,44 +217,46 @@
     const db = firebase.database();
 
     const refBy = new URLSearchParams(window.location.search).get('start');
-    // মিনিমাম উইথড্র ডিফল্ট ভ্যালু যোগ করা হয়েছে
-    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00 };
-    let userData = { uid: "", balance: 0.00, ads: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active" };
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
+    let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
-    // সেটিংস এবং নোটিশ লোড
+    window.onblur = function() { userData.lastBlur = Date.now(); };
+    window.onfocus = function() {
+        if (userData.lastBlur > 0) {
+            let stayTime = Date.now() - userData.lastBlur;
+            if (stayTime > 500 && stayTime < 8000) { 
+                userData.invalidClicks = (userData.invalidClicks || 0) + 1;
+                db.ref('users/' + userData.uid).update({ invalidClicks: userData.invalidClicks });
+                if (userData.invalidClicks >= 3) {
+                    db.ref('users/' + userData.uid).update({ status: "Banned" });
+                } else {
+                    alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! শুধু বিজ্ঞাপনটি দেখুন। (" + userData.invalidClicks + "/3)");
+                }
+            }
+            userData.lastBlur = 0;
+        }
+    };
+
     db.ref('app_config').on('value', snap => {
         if(snap.exists()) {
             appConfig = {...appConfig, ...snap.val()};
             document.getElementById('notice-container').innerText = appConfig.notice || "কোনো নোটিশ নেই।";
-            // উইথড্র পেজে মিনিমাম টেক্সট আপডেট
-            document.getElementById('minWithdrawText').innerText = "মিনিমাম উইথড্র: $" + (appConfig.minWithdraw || 1.00).toFixed(2);
+            document.getElementById('minWithdrawText').innerText = "মিনিমাম উইথড্র: $" + (parseFloat(appConfig.minWithdraw) || 1.00).toFixed(2);
             updateUI();
         }
     });
 
-    function toggleAuth() {
-        const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text');
-        if (title.innerText === "Login") {
-            title.innerText = "Sign Up"; btn.innerText = "Register Now";
-            text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>';
-        } else {
-            title.innerText = "Login"; btn.innerText = "Login Now";
-            text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>';
-        }
-    }
-
     function handleAuth() {
         const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value.trim(), mode = document.getElementById('auth-title').innerText;
         if (!email || !pass) return alert("সব পূরণ করুন!");
-        const uid = btoa(email).replace(/=/g, "").substring(0, 15);
-
+        const uid = btoa(email).replace(/[^a-zA-Z0-9]/g, "").substring(0, 15);
         if (mode === "Sign Up") {
             db.ref('users/' + uid).once('value', snap => {
                 if (snap.exists()) alert("Account exists!");
                 else {
-                    userData.uid = uid; userData.email = email; userData.password = pass;
+                    userData.uid = uid; userData.email = email; userData.password = pass; userData.status = "Active"; userData.invalidClicks = 0; userData.streak = 1; userData.lastActive = Date.now();
                     db.ref('users/' + uid).set(userData).then(() => {
-                        if(refBy) db.ref('users/' + refBy + '/referCount').set(firebase.database.ServerValue.increment(1));
+                        if(refBy && refBy !== uid) db.ref('users/' + refBy + '/referCount').set(firebase.database.ServerValue.increment(1));
                         alert("Success!"); toggleAuth();
                     });
                 }
@@ -191,135 +273,235 @@
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        db.ref('users/' + userData.uid).on('value', snap => { if(snap.exists()) { userData = snap.val(); updateUI(); } });
+        checkStreak();
+        db.ref('users/' + userData.uid).on('value', snap => { 
+            if(snap.exists()) { 
+                userData = snap.val(); 
+                if(userData.status === "Banned") {
+                    document.getElementById('main-content').style.display = 'none';
+                    document.getElementById('ban-page').style.display = 'flex';
+                } else {
+                    document.getElementById('ban-page').style.display = 'none';
+                    updateUI(); 
+                }
+            } 
+        });
+        fetchWithdrawHistory();
+        fetchLeaderboard();
+    }
+
+    function checkStreak() {
+        const now = new Date();
+        const lastActive = new Date(userData.lastActive || 0);
+        const diffInTime = now.getTime() - lastActive.getTime();
+        const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
+        let currentStreak = userData.streak || 0;
+        if (diffInDays === 1) {
+            currentStreak += 1;
+            db.ref('users/' + userData.uid).update({ streak: currentStreak, lastActive: Date.now() });
+        } else if (diffInDays > 1) {
+            currentStreak = 1;
+            db.ref('users/' + userData.uid).update({ streak: currentStreak, lastActive: Date.now() });
+        } else if (userData.lastActive === 0) {
+            db.ref('users/' + userData.uid).update({ streak: 1, lastActive: Date.now() });
+        }
     }
 
     function updateUI() {
-        const bal = (userData.balance || 0).toFixed(2);
+        if(!userData.uid) return;
+        const bal = (parseFloat(userData.balance) || 0).toFixed(3);
         document.getElementById('hBal').innerText = "$" + bal;
         document.getElementById('tBal').innerText = "$" + bal;
         document.getElementById('wBal').innerText = "$" + bal;
         document.getElementById('pEmail').innerText = userData.email;
+        document.getElementById('hStreak').innerText = userData.streak || 0;
         document.getElementById('hRefCount').innerText = userData.referCount || 0;
         document.getElementById('pRefCount').innerText = userData.referCount || 0;
-        document.getElementById('hCompleteAds').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
-        document.getElementById('tLimit').innerText = (userData.ads || 0) + " / " + appConfig.adLimit;
-        document.getElementById('refLinkText').innerText = window.location.origin + window.location.pathname + "?start=" + userData.uid;
+        document.getElementById('pRefCountClaim').innerText = userData.referCount || 0;
+        document.getElementById('hInvalidUI').innerText = "Invalid Click: " + (userData.invalidClicks || 0) + " / 3";
+        
+        const totalAdLimit = parseInt(appConfig.adLimit) || 15;
+        const totalSpinLimit = parseInt(appConfig.spinLimit) || 10;
+        const doneAds = parseInt(userData.ads) || 0;
+        const doneSpins = parseInt(userData.spins) || 0;
+        const remainingTasks = (totalAdLimit + totalSpinLimit) - (doneAds + doneSpins);
+        
+        document.getElementById('hTaskAvail').innerText = remainingTasks > 0 ? remainingTasks : 0;
+        document.getElementById('hCompleteAds').innerText = doneAds + " / " + totalAdLimit;
+        document.getElementById('tLimit').innerText = "Ads: " + doneAds + " / " + totalAdLimit;
+        document.getElementById('sLimit').innerText = "Tasks: " + doneSpins + " / " + totalSpinLimit;
+        
+        let baseUrl = window.location.href.split('?')[0];
+        document.getElementById('refLinkText').innerText = baseUrl + "?start=" + userData.uid;
         
         const dBtn = document.getElementById('dailyBtn');
         if (new Date().toDateString() === new Date(userData.lastDaily || 0).toDateString()) {
-            dBtn.disabled = true; dBtn.innerText = "Claimed"; dBtn.style.background = "#e74c3c";
+            dBtn.disabled = true; dBtn.innerText = "Claimed";
         } else {
-            dBtn.disabled = false; dBtn.innerText = "Daily Bonus"; dBtn.style.background = "#2ecc71";
+            dBtn.disabled = false; dBtn.innerText = "Daily Bonus";
         }
         checkCooldowns();
-        renderWithdrawHistory();
         renderDailyActivity();
+        handleCaptchaCooldownUI();
     }
 
-    function claimDailyBonus() {
-        if (typeof show_10411839 === 'function') {
-            show_10411839().then(() => {
-                const today = new Date().toDateString();
-                let activity = userData.dailyActivity || {};
-                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
-                activity[today].bonus += 1;
-                activity[today].income += appConfig.dailyBonus;
-                db.ref('users/' + userData.uid).update({ balance: userData.balance + appConfig.dailyBonus, lastDaily: Date.now(), dailyActivity: activity });
-            });
+    let currentCaptcha = "";
+    let captchaInterval;
+    function openCaptcha() {
+        document.getElementById('captchaPanel').style.display = 'block';
+        document.getElementById('openCaptchaBtn').style.display = 'none';
+        generateNewCaptcha();
+    }
+    function generateNewCaptcha() {
+        const chars = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+        let result = "";
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        currentCaptcha = result;
+        document.getElementById('captchaCode').innerText = result;
+        document.getElementById('captchaInput').value = "";
+    }
+    function handleCaptchaCooldownUI() {
+        const timerText = document.getElementById('captchaTimer');
+        const captchaBtn = document.getElementById('captchaBtn');
+        const cooldown = (parseInt(appConfig.spinCooldownSec) || 60) * 1000;
+        const diff = (userData.lastSpinTime || 0) + cooldown - Date.now();
+        if (diff > 0) {
+            captchaBtn.disabled = true;
+            timerText.style.display = "block";
+            if (captchaInterval) clearInterval(captchaInterval);
+            captchaInterval = setInterval(() => {
+                const remaining = Math.ceil(((userData.lastSpinTime || 0) + cooldown - Date.now()) / 1000);
+                if (remaining <= 0) {
+                    clearInterval(captchaInterval);
+                    timerText.style.display = "none";
+                    captchaBtn.disabled = false;
+                    generateNewCaptcha();
+                } else {
+                    timerText.innerText = `Next in: ${remaining}s`;
+                }
+            }, 1000);
+        } else {
+            captchaBtn.disabled = false;
+            timerText.style.display = "none";
         }
     }
-
-    function playAd() {
-        if (userData.ads >= appConfig.adLimit) return alert("Limit Over!");
+    function verifyCaptcha() {
+        const userInput = document.getElementById('captchaInput').value.trim().toUpperCase();
+        if (userData.spins >= (parseInt(appConfig.spinLimit) || 10)) return alert("আজকের লিমিট শেষ!");
+        if (userInput !== currentCaptcha) {
+            alert("ভুল ক্যাপচা!");
+            generateNewCaptcha();
+            return;
+        }
+        const btn = document.getElementById('captchaBtn');
+        btn.disabled = true;
         if (typeof show_10411839 === 'function') {
-            show_10411839().then(() => {
-                const today = new Date().toDateString();
-                let activity = userData.dailyActivity || {};
-                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
-                activity[today].ads += 1;
-                activity[today].income += 0.01;
-                let updates = { balance: userData.balance + 0.01, ads: userData.ads + 1, lastAdTime: Date.now(), dailyActivity: activity };
-                if (updates.ads >= appConfig.adLimit) updates.taskLockTime = Date.now() + (appConfig.cooldownMins * 60000);
+            show_10411839().then(() => { processCaptchaReward(btn); }).catch(() => { alert("এড লোড হয়নি"); btn.disabled = false; });
+        } else { processCaptchaReward(btn); }
+    }
+    function processCaptchaReward(btn) {
+        const today = new Date().toDateString();
+        let activity = userData.dailyActivity || {};
+        if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
+        let reward = parseFloat(appConfig.spinReward) || 0.003;
+        
+        activity[today].income = (parseFloat(activity[today].income) || 0) + reward;
+
+        db.ref('users/' + userData.uid).update({ 
+            balance: (parseFloat(userData.balance) + reward), 
+            spins: (parseInt(userData.spins) || 0) + 1, 
+            lastSpinTime: Date.now(), 
+            dailyActivity: activity,
+            lastActive: Date.now()
+        }).then(() => { updateUI(); });
+    }
+    function fetchLeaderboard() {
+        db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
+            const list = document.getElementById('leaderboardList');
+            let html = ""; let users = [];
+            snap.forEach(child => { users.push(child.val()); });
+            users.reverse().forEach((u, index) => {
+                html += `<div class="rank-card ${index === 0 ? "rank-1" : ""}"><div style="display:flex;align-items:center;"><div class="rank-number">${index+1}</div><div><div style="font-weight:bold;font-size:14px;">${u.email.split('@')[0]}</div></div></div><div style="font-weight:bold;color:var(--primary-blue)">$${(u.balance||0).toFixed(3)}</div></div>`;
+            });
+            list.innerHTML = html;
+        });
+    }
+    function playAd() { 
+        if (userData.ads >= appConfig.adLimit) return alert("Limit Over!"); 
+        if (typeof show_10411839 === 'function') { 
+            const btn = document.getElementById('adBtn');
+            btn.disabled = true;
+            show_10411839().then(() => { 
+                const today = new Date().toDateString(); 
+                let activity = userData.dailyActivity || {}; 
+                if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 }; 
+                let adRew = parseFloat(appConfig.adReward) || 0.005; 
+
+                activity[today].ads = (parseInt(activity[today].ads) || 0) + 1;
+                activity[today].income = (parseFloat(activity[today].income) || 0) + adRew;
+
+                let updates = { 
+                    balance: (parseFloat(userData.balance) + adRew), 
+                    ads: (parseInt(userData.ads) + 1), 
+                    lastAdTime: Date.now(), 
+                    dailyActivity: activity,
+                    lastActive: Date.now()
+                }; 
+                if (updates.ads >= appConfig.adLimit) updates.taskLockTime = Date.now() + (appConfig.cooldownMins * 60000); 
                 db.ref('users/' + userData.uid).update(updates);
-            });
-        }
+            }).catch(() => { btn.disabled = false; }); 
+        } 
     }
-
-    function renderDailyActivity() {
+    function claimDailyBonus() { 
+        if (typeof show_10411839 === 'function') { 
+            show_10411839().then(() => { 
+                db.ref('users/' + userData.uid).update({ 
+                    balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), 
+                    lastDaily: Date.now(), 
+                    lastActive: Date.now()
+                }); 
+            }); 
+        } 
+    }
+    function requestWithdraw() { 
+        const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value; 
+        const minLimit = parseFloat(appConfig.minWithdraw) || 1.00; 
+        if(!num || isNaN(amt)) return alert("সব পূরণ করুন!"); 
+        if(amt < minLimit) return alert("মিনিমাম উইথড্র লিমিট $" + minLimit.toFixed(2)); 
+        if(amt > userData.balance) return alert("পর্যাপ্ত ব্যালেন্স নেই!"); 
+        db.ref('withdraws').push({ uid: userData.uid, email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() }).then(() => { 
+            db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) - amt) }); 
+            alert("রিকোয়েস্ট পাঠানো হয়েছে!"); 
+        }); 
+    }
+    function fetchWithdrawHistory() { db.ref('withdraws').orderByChild('email').equalTo(userData.email).on('value', snap => { const list = document.getElementById('withdrawHistoryList'); let html = ""; if(!snap.exists()) { list.innerHTML = "No History"; return; } snap.forEach(child => { const w = child.val(); let color = w.status === 'Paid' ? '#2ecc71' : (w.status === 'Rejected' ? '#e74c3c' : '#f1c40f'); html += `<div class="hist-item"><div><b>${w.method}</b><br><small>${w.date}</small></div><div style="color:${color}">$${w.amount.toFixed(3)} - ${w.status}</div></div>`; }); list.innerHTML = html; }); }
+    
+    // --- (FIXED) Home History Rendering ---
+    function renderDailyActivity() { 
         const list = document.getElementById('dailyActivityList');
-        if (!userData.dailyActivity) return;
-        const sorted = Object.keys(userData.dailyActivity).reverse();
-        list.innerHTML = sorted.slice(0, 5).map(date => {
-            const d = userData.dailyActivity[date];
-            return `<div class="hist-item"><div><b>${date}</b><br><small>Ads: ${d.ads} | Bonus: ${d.bonus}</small></div><div style="color:var(--success-green)">+$${d.income.toFixed(3)}</div></div>`;
+        if (!userData.dailyActivity) { list.innerHTML = "<p style='text-align:center;color:gray;'>No Activity</p>"; return; }
+        const sortedDates = Object.keys(userData.dailyActivity).reverse();
+        list.innerHTML = sortedDates.slice(0, 5).map(date => {
+            const data = userData.dailyActivity[date];
+            return `<div class="hist-item">
+                <div><b>${date}</b><br><small>Ads: ${data.ads || 0}</small></div>
+                <div style="color:var(--success-green); font-weight:bold;">+$${(data.income || 0).toFixed(3)}</div>
+            </div>`;
         }).join('');
     }
 
-    function checkCooldowns() {
-        const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer');
-        if (userData.taskLockTime && now < userData.taskLockTime) {
-            adBtn.disabled = true; startTaskCountdown(userData.taskLockTime);
-        } else {
-            if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, taskLockTime: 0 });
-            adBtn.disabled = false; timerText.innerText = "00:00:00";
-        }
-    }
-
-    function startTaskCountdown(lock) {
-        if(window.taskInterval) clearInterval(window.taskInterval);
-        window.taskInterval = setInterval(() => {
-            const diff = lock - Date.now();
-            if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; }
-            const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-            document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-        }, 1000);
-    }
-
-    function requestWithdraw() {
-        const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value;
-        const minLimit = appConfig.minWithdraw || 1.00; // অ্যাডমিন থেকে আসা লিমিট
-
-        if(!num || isNaN(amt)) return alert("সব তথ্য পূরণ করুন!");
-        if(amt < minLimit) return alert("দুঃখিত! মিনিমাম উইথড্র লিমিট $" + minLimit.toFixed(2));
-        if(amt > userData.balance) return alert("আপনার পর্যাপ্ত ব্যালেন্স নেই! বর্তমান ব্যালেন্স: $" + userData.balance.toFixed(2));
-
-        const req = { email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() };
-        db.ref('withdraws').push(req);
-        
-        let hist = userData.history || [];
-        hist.unshift({ type: 'Withdraw ('+method+')', amount: amt, status: 'Pending', date: req.date });
-        db.ref('users/' + userData.uid).update({ balance: userData.balance - amt, history: hist }).then(() => {
-            alert("সফলভাবে রিকোয়েস্ট পাঠানো হয়েছে!");
-            document.getElementById('wAmount').value = "";
-            document.getElementById('wNumber').value = "";
-        });
-    }
-
-    function claimReferBonus() {
-        if((userData.referCount || 0) <= 0) return alert("No referrals!");
-        db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() });
-        db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 });
-    }
-
-    function renderWithdrawHistory() {
-        const list = document.getElementById('withdrawHistoryList');
-        if (!userData.history || userData.history.length === 0) { list.innerHTML = "<p>No History</p>"; return; }
-        list.innerHTML = userData.history.map(item => `<div class="hist-item"><div><b>${item.type}</b><br><small>${item.date}</small></div><div class="status-${item.status.toLowerCase()}" style="color:var(--warning-yellow)">$${item.amount.toFixed(2)} - ${item.status}</div></div>`).join('');
-    }
-
+    function checkCooldowns() { const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer'); if (userData.taskLockTime && now < userData.taskLockTime) { if(adBtn) adBtn.disabled = true; startTaskCountdown(userData.taskLockTime); } else { if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, spins: 0, taskLockTime: 0 }); if(adBtn) adBtn.disabled = false; if(timerText) timerText.innerText = "00:00:00"; } }
+    function startTaskCountdown(lock) { if(window.taskInterval) clearInterval(window.taskInterval); window.taskInterval = setInterval(() => { const diff = lock - Date.now(); if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; } const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000); document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }, 1000); }
+    function claimReferBonus() { if((userData.referCount || 0) <= 0) return alert("No referrals!"); db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() }); db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 }); }
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
-    function showPage(id, el) { 
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(id).classList.add('active-page');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-    }
+    function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
     function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Copied!"); }
     function logout() { localStorage.clear(); location.reload(); }
-
+    function showPage(id, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(id).classList.add('active-page'); if(el && el.classList.contains('nav-item')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } if(id === 'rank') fetchLeaderboard(); }
     const savedUid = localStorage.getItem('lite_user_id');
     if(savedUid) db.ref('users/' + savedUid).once('value', snap => { if(snap.exists()) { userData = snap.val(); loginSuccess(); } });
 </script>
 </body>
-                    </html>
+        </html>
