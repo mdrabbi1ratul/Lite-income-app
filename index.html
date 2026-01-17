@@ -246,7 +246,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const refBy = new URLSearchParams(window.location.search).get('start');
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
@@ -312,17 +311,42 @@
         }
     });
 
+    // সংশোধিত handleAuth ফাংশন যা রেফারেল রিকোয়েস্ট পাঠাবে
     function handleAuth() {
-        const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value.trim(), mode = document.getElementById('auth-title').innerText;
+        const email = document.getElementById('auth-email').value.trim(), 
+              pass = document.getElementById('auth-pass').value.trim(), 
+              mode = document.getElementById('auth-title').innerText;
+              
         if (!email || !pass) return alert("সব পূরণ করুন!");
+        
         const uid = btoa(email).replace(/[^a-zA-Z0-9]/g, "").substring(0, 15);
+        
         if (mode === "Sign Up") {
             db.ref('users/' + uid).once('value', snap => {
-                if (snap.exists()) alert("Account exists!");
+                if (snap.exists()) alert("এই ইমেইল দিয়ে অলরেডি একাউন্ট খোলা আছে!");
                 else {
-                    userData.uid = uid; userData.email = email; userData.password = pass; userData.status = "Active"; userData.invalidClicks = 0; userData.streak = 1; userData.lastActive = Date.now();
-                    db.ref('users/' + uid).set(userData).then(() => {
+                    const newUserData = {
+                        uid: uid,
+                        email: email,
+                        password: pass,
+                        balance: 0.00,
+                        ads: 0,
+                        spins: 0,
+                        referCount: 0,
+                        status: "Active",
+                        invalidClicks: 0,
+                        streak: 1,
+                        lastActive: Date.now(),
+                        lastDaily: 0
+                    };
+
+                    db.ref('users/' + uid).set(newUserData).then(() => {
+                        // ইউআরএল থেকে রেফার আইডি চেক করা
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const refBy = urlParams.get('start');
+
                         if(refBy && refBy !== uid) {
+                            // রেফার রিকোয়েস্ট ডাটাবেসে পাঠানো যা এডমিন প্যানেলে শো করবে
                             db.ref('refer_pending').push({
                                 referrerUid: refBy,
                                 referredEmail: email,
@@ -330,15 +354,18 @@
                                 date: new Date().toLocaleDateString()
                             });
                         }
-                        alert("Success!"); toggleAuth();
+                        alert("রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।"); 
+                        toggleAuth();
                     });
                 }
             });
         } else {
             db.ref('users/' + uid).once('value', snap => {
                 if (snap.exists() && snap.val().password === pass) {
-                    userData = snap.val(); localStorage.setItem('lite_user_id', uid); loginSuccess();
-                } else alert("Wrong credentials!");
+                    userData = snap.val(); 
+                    localStorage.setItem('lite_user_id', uid); 
+                    loginSuccess();
+                } else alert("ভুল ইমেইল বা পাসওয়ার্ড!");
             });
         }
     }
@@ -458,12 +485,15 @@
 
     function processClaim(key) {
         const reward = parseFloat(appConfig.referReward) || 0.10;
-        db.ref('users/' + userData.uid).update({
-            balance: (parseFloat(userData.balance) + reward),
-            referCount: (parseInt(userData.referCount) || 0) + 1
+        db.ref('users/' + userData.uid).transaction((currentData) => {
+            if (currentData) {
+                currentData.balance = (parseFloat(currentData.balance) || 0) + reward;
+                currentData.referCount = (parseInt(currentData.referCount) || 0) + 1;
+            }
+            return currentData;
         }).then(() => {
             db.ref('refer_pending/' + key).update({ status: "Claimed" });
-            alert("Reward Claimed Successfully!");
+            alert("Congratulations! You received $" + reward + " bonus.");
         });
     }
 
@@ -584,7 +614,6 @@
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
     
-    // UPDATED REFERRAL FUNCTIONS
     function copyRef() { 
         const botUsername = "lite_income_bot"; 
         const referId = userData.uid;
@@ -612,4 +641,4 @@
     }
 </script>
 </body>
-    </html>
+                    </html>
