@@ -13,7 +13,6 @@
     :root { --primary-blue: #3498db; --dark-bg: #0a0b10; --card-bg: #161b22; --text-white: #e6edf3; --accent-red: #e74c3c; --success-green: #2ecc71; --warning-yellow: #f1c40f; }
     body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: var(--text-white); padding: 15px; padding-bottom: 100px; user-select: none; }
     
-    /* --- উন্নত স্ট্রিক ডিজাইন --- */
     .streak-container { display: flex; justify-content: center; margin-bottom: -15px; position: relative; z-index: 10; }
     .streak-badge { 
         background: linear-gradient(135deg, #ff9d00, #ff5e00); 
@@ -36,7 +35,6 @@
     }
     .streak-text { letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-    /* Captcha Style */
     #captchaCode { font-size: 32px; letter-spacing: 10px; font-weight: bold; color: #fff; background: #1c2128; padding: 15px; border-radius: 8px; border: 1px dashed var(--primary-blue); user-select: none; margin: 15px 0; text-align: center; }
     #captchaInput { text-align: center; font-size: 18px; text-transform: uppercase; letter-spacing: 5px; border: 2px solid #30363d; }
     #captchaTimer { color: var(--warning-yellow); font-weight: bold; font-size: 18px; margin: 10px 0; display: none; }
@@ -76,6 +74,23 @@
     .hist-item { background: #0d1117; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--primary-blue); display: flex; justify-content: space-between; align-items: center; }
     .timer-display { font-family: 'Courier New', monospace; font-size: 28px; font-weight: bold; color: var(--success-green); text-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
     .notice-box { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--warning-yellow); color: var(--warning-yellow); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; font-size: 14px; }
+
+    .ref-item-card { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .status-pending { color: var(--warning-yellow); font-size: 12px; font-weight: bold; }
+    .status-claim { background: var(--success-green); color: white; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-weight: bold; border: none; }
+    .status-done { color: #8b949e; font-size: 12px; }
+    
+    .pending-badge { 
+        background: var(--success-green); 
+        color: white; 
+        padding: 4px 12px; 
+        border-radius: 20px; 
+        font-size: 14px; 
+        margin-left: 10px; 
+        font-weight: 900;
+        box-shadow: 0 2px 10px rgba(46, 204, 113, 0.3);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
 </style>
 </head>  
 <body>  
@@ -118,13 +133,13 @@
             <div class="card" style="padding-top: 30px;">
                 <h4 id="uName">স্বাগতম!</h4>  
                 <div class="main-bal" id="hBal">$0.000</div>  
-                <p id="hInvalidUI" style="color:var(--accent-red); font-size:12px; font-weight:bold; margin:0;">Invalid Click: 0 / 3</p>
+                <p id="hInvalidUI" style="color:var(--accent-red); font-size:16px; font-weight:bold; margin:0;">Invalid Click: 0 / 3</p>
             </div>  
 
             <div class="grid">  
                 <div class="grid-item"><span>টুডে টাস্ক</span><p id="hTaskAvail">0</p></div>  
                 <div class="grid-item"><span>সফল রেফার</span><p id="hRefCount">0</p></div>  
-                <div class="grid-item" style="grid-column: span 2;"><span>টোটাল এড ভিউ</span><p id="hCompleteAds">0 / 0</p></div>  
+                <div class="grid-item" style="grid-column: span 2;"><span>টোটাল এড ভভিউ</span><p id="hCompleteAds">0 / 0</p></div>  
             </div>  
             <h3 style="margin-top:20px; text-align:left; border-left:3px solid var(--success-green); padding-left:10px;">ডেইলি এক্টিভিটি</h3>
             <div id="dailyActivityList" class="hist-list"></div>
@@ -165,6 +180,8 @@
             <div class="card">  
                 <span>ব্যালেন্স: <b id="wBal" style="color:var(--primary-blue)">$0.000</b></span><br>
                 <small id="minWithdrawText" style="color: var(--warning-yellow); display: block; margin-top: 5px;">মিনিমাম উইথড্র: $0.00</small>
+                <small id="minReferText" style="color: var(--primary-blue); display: block; margin-top: 2px;">প্রয়োজনীয় রেফার: ০</small>
+                
                 <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Recharge</option></select>  
                 <input id="wNumber" placeholder="নম্বর">  
                 <input id="wAmount" type="number" placeholder="পরিমাণ ($)">  
@@ -182,7 +199,7 @@
                 <button class="btn" onclick="copyRef()" style="padding:10px; font-size:12px;">Copy Link</button> 
             </div>
             <div class="menu-item" onclick="showPage('refer_claim', this)">
-                <span>👥 রেফারেল বোনাস ক্লেইম (পেন্ডিং: <b id="pRefCount" style="color:var(--warning-yellow)">0</b>)</span>
+                <span>👥 রেফারেল বোনাস ক্লেইম <span id="pendingRefBadge" class="pending-badge">0</span></span>
                 <span>➔</span>
             </div>
             <div class="menu-item" onclick="window.open('https://t.me/lite_income_app')">
@@ -199,9 +216,11 @@
         <div id="refer_claim" class="page">
             <button onclick="showPage('profile', this)" style="background:none; border:none; color:var(--primary-blue); cursor:pointer; margin-bottom:15px;">⬅ Back to Profile</button>
             <div class="card">
-                <h3>Referral Bonus</h3>
-                <p>পেন্ডিং রেফার: <b id="pRefCountClaim" style="color:var(--warning-yellow)">0</b></p>
-                <button class="btn btn-bonus" onclick="claimReferBonus()">Claim Now</button>
+                <h3>Referral Activities</h3>
+                <p style="font-size: 12px; color: gray; margin-bottom: 15px;">অ্যাডমিন অ্যাপ্রুভ করলে 'Claim' বাটন আসবে।</p>
+                <div id="referListContainer">
+                    <p style="text-align:center; color:gray;">লোড হচ্ছে...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -224,36 +243,22 @@
     const db = firebase.database();
 
     const refBy = new URLSearchParams(window.location.search).get('start');
-    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
+    // Added minReferLimit to appConfig
+    let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
-    // --- উন্নত VPN ডিটেকশন (Timezone + API) ---
     async function detectVPN() {
         try {
-            // ১. টাইমজোন চেক (ভিপিএন থাকলে প্রায়ই ঢাকার বাইরে থাকে)
             const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             if (userTimezone !== "Asia/Dhaka") return true;
-
-            // ২. বিকল্প API চেক
             const response = await fetch('https://ipapi.co/json/');
             const data = await response.json();
-            
-            // ৩. সিকিউরিটি ফ্ল্যাগ চেক
             if (data.security && (data.security.proxy || data.security.vpn)) return true;
-            
-            // ৪. হোস্টিং চেক
-            const org = data.org ? data.org.toLowerCase() : "";
-            const blockedOrgs = ["vpn", "proxy", "hosting", "datacenter", "digitalocean", "cloudflare", "google"];
-            if (blockedOrgs.some(item => org.includes(item))) return true;
-
             return false;
-        } catch (error) {
-            return false; 
-        }
+        } catch (error) { return false; }
     }
 
     async function initApp() {
-        // শুরুতেই ভিপিএন চেক
         const isVPN = await detectVPN();
         if (isVPN) {
             document.getElementById('vpn-page').style.display = 'flex';
@@ -261,27 +266,20 @@
             document.getElementById('main-content').style.display = 'none';
             return;
         }
-
         const savedUid = localStorage.getItem('lite_user_id');
         if(savedUid) {
             db.ref('users/' + savedUid).once('value', snap => { 
-                if(snap.exists()) { 
-                    userData = snap.val(); 
-                    loginSuccess(); 
-                } 
+                if(snap.exists()) { userData = snap.val(); loginSuccess(); } 
             });
         }
     }
-
     initApp();
 
     window.onblur = function() { userData.lastBlur = Date.now(); };
     window.onfocus = function() {
         if (userData.lastBlur > 0) {
             let stayTime = Date.now() - userData.lastBlur;
-            if (stayTime > 500 && stayTime < 8000) { 
-                reportInvalidClick();
-            }
+            if (stayTime > 500 && stayTime < 8000) { reportInvalidClick(); }
             userData.lastBlur = 0;
         }
     };
@@ -290,8 +288,6 @@
         if(!userData.uid || userData.status === "Banned") return;
         userData.invalidClicks = (userData.invalidClicks || 0) + 1;
         let updates = { invalidClicks: userData.invalidClicks };
-        
-        // ৩ টি ক্লিক হলেই সাথে সাথে ব্যান
         if (userData.invalidClicks >= 3) {
             updates.status = "Banned";
             db.ref('users/' + userData.uid).update(updates);
@@ -299,7 +295,7 @@
             document.getElementById('ban-page').style.display = 'flex';
         } else {
             db.ref('users/' + userData.uid).update(updates);
-            alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! শুধু বিজ্ঞাপনটি দেখুন। (" + userData.invalidClicks + "/3)");
+            alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! (" + userData.invalidClicks + "/3)");
         }
     }
 
@@ -308,6 +304,7 @@
             appConfig = {...appConfig, ...snap.val()};
             document.getElementById('notice-container').innerText = appConfig.notice || "কোনো নোটিশ নেই।";
             document.getElementById('minWithdrawText').innerText = "মিনিমাম উইথড্র: $" + (parseFloat(appConfig.minWithdraw) || 1.00).toFixed(2);
+            document.getElementById('minReferText').innerText = "প্রয়োজনীয় রেফার: " + (parseInt(appConfig.minReferLimit) || 0) + " টি";
             updateUI();
         }
     });
@@ -322,7 +319,14 @@
                 else {
                     userData.uid = uid; userData.email = email; userData.password = pass; userData.status = "Active"; userData.invalidClicks = 0; userData.streak = 1; userData.lastActive = Date.now();
                     db.ref('users/' + uid).set(userData).then(() => {
-                        if(refBy && refBy !== uid) db.ref('users/' + refBy + '/referCount').set(firebase.database.ServerValue.increment(1));
+                        if(refBy && refBy !== uid) {
+                            db.ref('refer_pending').push({
+                                referrerUid: refBy,
+                                referredEmail: email,
+                                status: "Pending",
+                                date: new Date().toLocaleDateString()
+                            });
+                        }
                         alert("Success!"); toggleAuth();
                     });
                 }
@@ -336,14 +340,11 @@
         }
     }
 
-    // --- ব্যান চেক অটোমেশন ---
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
-        
         db.ref('users/' + userData.uid).on('value', snap => { 
             if(snap.exists()) { 
                 userData = snap.val(); 
-                // লগইন এর সময় বা ডাটাবেজ আপডেটের সময় ব্যান চেক
                 if(userData.status === "Banned" || (userData.invalidClicks || 0) >= 3) {
                     document.getElementById('main-content').style.display = 'none';
                     document.getElementById('ban-page').style.display = 'flex';
@@ -357,13 +358,27 @@
         checkStreak();
         fetchWithdrawHistory();
         fetchLeaderboard();
+        listenPendingCount();
+    }
+
+    function listenPendingCount() {
+        db.ref('refer_pending').orderByChild('referrerUid').equalTo(userData.uid).on('value', snap => {
+            let count = 0;
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    if (child.val().status === "Pending" || child.val().status === "Approved") {
+                        count++;
+                    }
+                });
+            }
+            document.getElementById('pendingRefBadge').innerText = count;
+        });
     }
 
     function checkStreak() {
         const now = new Date();
         const lastActive = new Date(userData.lastActive || 0);
-        const diffInTime = now.getTime() - lastActive.getTime();
-        const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
+        const diffInDays = Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 3600 * 24));
         let currentStreak = userData.streak || 0;
         if (diffInDays === 1) {
             currentStreak += 1;
@@ -385,8 +400,6 @@
         document.getElementById('pEmail').innerText = userData.email;
         document.getElementById('hStreak').innerText = userData.streak || 0;
         document.getElementById('hRefCount').innerText = userData.referCount || 0;
-        document.getElementById('pRefCount').innerText = userData.referCount || 0;
-        document.getElementById('pRefCountClaim').innerText = userData.referCount || 0;
         document.getElementById('hInvalidUI').innerText = "Invalid Click: " + (userData.invalidClicks || 0) + " / 3";
         
         const totalAdLimit = parseInt(appConfig.adLimit) || 15;
@@ -399,8 +412,6 @@
         document.getElementById('hCompleteAds').innerText = doneAds + " / " + totalAdLimit;
         document.getElementById('tLimit').innerText = "Ads: " + doneAds + " / " + totalAdLimit;
         document.getElementById('sLimit').innerText = "Tasks: " + doneSpins + " / " + totalSpinLimit;
-        
-        // --- প্রোফাইলে রেফার আইডি ডিসপ্লে (গিটহাব লিংক হাইড) ---
         document.getElementById('refLinkText').innerText = "Refer ID: " + userData.uid;
         
         const dBtn = document.getElementById('dailyBtn');
@@ -414,6 +425,45 @@
         handleCaptchaCooldownUI();
     }
 
+    function fetchReferralList() {
+        const container = document.getElementById('referListContainer');
+        db.ref('refer_pending').orderByChild('referrerUid').equalTo(userData.uid).on('value', snap => {
+            let html = "";
+            if (!snap.exists()) {
+                container.innerHTML = "<p style='text-align:center; color:gray;'>কোনো রেফারেল পাওয়া যায়নি</p>";
+                return;
+            }
+            snap.forEach(child => {
+                const data = child.val();
+                const key = child.key;
+                let statusUI = "";
+                if (data.status === "Pending") statusUI = `<span class="status-pending">Pending</span>`;
+                else if (data.status === "Approved") statusUI = `<button class="status-claim" onclick="processClaim('${key}')">Claim</button>`;
+                else statusUI = `<span class="status-done">Claimed ✅</span>`;
+
+                html += `<div class="ref-item-card">
+                            <div style="text-align:left;">
+                                <b style="font-size:13px;">${data.referredEmail.split('@')[0]}</b><br>
+                                <small style="color:gray;">${data.date || ''}</small>
+                            </div>
+                            <div>${statusUI}</div>
+                         </div>`;
+            });
+            container.innerHTML = html;
+        });
+    }
+
+    function processClaim(key) {
+        const reward = parseFloat(appConfig.referReward) || 0.10;
+        db.ref('users/' + userData.uid).update({
+            balance: (parseFloat(userData.balance) + reward),
+            referCount: (parseInt(userData.referCount) || 0) + 1
+        }).then(() => {
+            db.ref('refer_pending/' + key).update({ status: "Claimed" });
+            alert("Reward Claimed Successfully!");
+        });
+    }
+
     let currentCaptcha = "";
     let captchaInterval;
     function openCaptcha() {
@@ -424,49 +474,31 @@
     function generateNewCaptcha() {
         const chars = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
         let result = "";
-        for (let i = 0; i < 6; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        for (let i = 0; i < 6; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
         currentCaptcha = result;
         document.getElementById('captchaCode').innerText = result;
         document.getElementById('captchaInput').value = "";
     }
     function handleCaptchaCooldownUI() {
-        const timerText = document.getElementById('captchaTimer');
-        const captchaBtn = document.getElementById('captchaBtn');
+        const timerText = document.getElementById('captchaTimer'), captchaBtn = document.getElementById('captchaBtn');
         const cooldown = (parseInt(appConfig.spinCooldownSec) || 60) * 1000;
         const diff = (userData.lastSpinTime || 0) + cooldown - Date.now();
         if (diff > 0) {
-            captchaBtn.disabled = true;
-            timerText.style.display = "block";
+            captchaBtn.disabled = true; timerText.style.display = "block";
             if (captchaInterval) clearInterval(captchaInterval);
             captchaInterval = setInterval(() => {
                 const remaining = Math.ceil(((userData.lastSpinTime || 0) + cooldown - Date.now()) / 1000);
-                if (remaining <= 0) {
-                    clearInterval(captchaInterval);
-                    timerText.style.display = "none";
-                    captchaBtn.disabled = false;
-                    generateNewCaptcha();
-                } else {
-                    timerText.innerText = `Next in: ${remaining}s`;
-                }
+                if (remaining <= 0) { clearInterval(captchaInterval); timerText.style.display = "none"; captchaBtn.disabled = false; generateNewCaptcha(); }
+                else { timerText.innerText = `Next in: ${remaining}s`; }
             }, 1000);
-        } else {
-            captchaBtn.disabled = false;
-            timerText.style.display = "none";
-        }
+        } else { captchaBtn.disabled = false; timerText.style.display = "none"; }
     }
     function verifyCaptcha() {
         const userInput = document.getElementById('captchaInput').value.trim().toUpperCase();
         if (userData.spins >= (parseInt(appConfig.spinLimit) || 10)) return alert("আজকের লিমিট শেষ!");
-        if (userInput !== currentCaptcha) {
-            alert("ভুল ক্যাপচা!");
-            generateNewCaptcha();
-            return;
-        }
+        if (userInput !== currentCaptcha) { alert("ভুল ক্যাপচা!"); generateNewCaptcha(); return; }
         const btn = document.getElementById('captchaBtn');
         btn.disabled = true;
-
         if (typeof show_10411839 === 'function') {
             show_10411839().then(() => { processCaptchaReward(btn); }).catch(() => { alert("এড লোড হয়নি"); btn.disabled = false; });
         } else { processCaptchaReward(btn); }
@@ -476,16 +508,8 @@
         let activity = userData.dailyActivity || {};
         if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 };
         let reward = parseFloat(appConfig.spinReward) || 0.003;
-        
         activity[today].income = (parseFloat(activity[today].income) || 0) + reward;
-
-        db.ref('users/' + userData.uid).update({ 
-            balance: (parseFloat(userData.balance) + reward), 
-            spins: (parseInt(userData.spins) || 0) + 1, 
-            lastSpinTime: Date.now(), 
-            dailyActivity: activity,
-            lastActive: Date.now()
-        }).then(() => { updateUI(); });
+        db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) + reward), spins: (parseInt(userData.spins) || 0) + 1, lastSpinTime: Date.now(), dailyActivity: activity, lastActive: Date.now() }).then(() => { updateUI(); });
     }
     function fetchLeaderboard() {
         db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
@@ -500,26 +524,16 @@
     }
     function playAd() { 
         if (userData.ads >= appConfig.adLimit) return alert("Limit Over!"); 
-        
         if (typeof show_10411839 === 'function') { 
-            const btn = document.getElementById('adBtn');
-            btn.disabled = true;
+            const btn = document.getElementById('adBtn'); btn.disabled = true;
             show_10411839().then(() => { 
                 const today = new Date().toDateString(); 
                 let activity = userData.dailyActivity || {}; 
                 if(!activity[today]) activity[today] = { ads: 0, income: 0, bonus: 0 }; 
                 let adRew = parseFloat(appConfig.adReward) || 0.005; 
-
                 activity[today].ads = (parseInt(activity[today].ads) || 0) + 1;
                 activity[today].income = (parseFloat(activity[today].income) || 0) + adRew;
-
-                let updates = { 
-                    balance: (parseFloat(userData.balance) + adRew), 
-                    ads: (parseInt(userData.ads) + 1), 
-                    lastAdTime: Date.now(), 
-                    dailyActivity: activity,
-                    lastActive: Date.now()
-                }; 
+                let updates = { balance: (parseFloat(userData.balance) + adRew), ads: (parseInt(userData.ads) + 1), lastAdTime: Date.now(), dailyActivity: activity, lastActive: Date.now() }; 
                 if (updates.ads >= appConfig.adLimit) updates.taskLockTime = Date.now() + (appConfig.cooldownMins * 60000); 
                 db.ref('users/' + userData.uid).update(updates);
             }).catch(() => { btn.disabled = false; }); 
@@ -528,56 +542,57 @@
     function claimDailyBonus() { 
         if (typeof show_10411839 === 'function') { 
             show_10411839().then(() => { 
-                db.ref('users/' + userData.uid).update({ 
-                    balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), 
-                    lastDaily: Date.now(), 
-                    lastActive: Date.now()
-                }); 
+                db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), lastDaily: Date.now(), lastActive: Date.now() }); 
             }); 
         } 
     }
+    
+    // UPDATED Withdraw Function with Referral Check
     function requestWithdraw() { 
         const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value; 
         const minLimit = parseFloat(appConfig.minWithdraw) || 1.00; 
+        const minRef = parseInt(appConfig.minReferLimit) || 0;
+        const userRef = parseInt(userData.referCount) || 0;
+
         if(!num || isNaN(amt)) return alert("সব পূরণ করুন!"); 
-        if(amt < minLimit) return alert("মিনিমাম উইথড্র লিমিট $" + minLimit.toFixed(2)); 
+        
+        // Referral Check Logic
+        if(userRef < minRef) {
+            return alert("উইথড্র করতে কমপক্ষে " + minRef + " টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: " + userRef + " টি।");
+        }
+
+        if(amt < minLimit) return alert("মিনিমাম লিমিট $" + minLimit.toFixed(2)); 
         if(amt > userData.balance) return alert("পর্যাপ্ত ব্যালেন্স নেই!"); 
+        
         db.ref('withdraws').push({ uid: userData.uid, email: userData.email, amount: amt, method: method, number: num, status: "Pending", date: new Date().toLocaleString() }).then(() => { 
             db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) - amt) }); 
             alert("রিকোয়েস্ট পাঠানো হয়েছে!"); 
         }); 
     }
+
     function fetchWithdrawHistory() { db.ref('withdraws').orderByChild('email').equalTo(userData.email).on('value', snap => { const list = document.getElementById('withdrawHistoryList'); let html = ""; if(!snap.exists()) { list.innerHTML = "No History"; return; } snap.forEach(child => { const w = child.val(); let color = w.status === 'Paid' ? '#2ecc71' : (w.status === 'Rejected' ? '#e74c3c' : '#f1c40f'); html += `<div class="hist-item"><div><b>${w.method}</b><br><small>${w.date}</small></div><div style="color:${color}">$${w.amount.toFixed(3)} - ${w.status}</div></div>`; }); list.innerHTML = html; }); }
-    
     function renderDailyActivity() { 
         const list = document.getElementById('dailyActivityList');
         if (!userData.dailyActivity) { list.innerHTML = "<p style='text-align:center;color:gray;'>No Activity</p>"; return; }
         const sortedDates = Object.keys(userData.dailyActivity).reverse();
         list.innerHTML = sortedDates.slice(0, 5).map(date => {
             const data = userData.dailyActivity[date];
-            return `<div class="hist-item">
-                <div><b>${date}</b><br><small>Ads: ${data.ads || 0}</small></div>
-                <div style="color:var(--success-green); font-weight:bold;">+$${(data.income || 0).toFixed(3)}</div>
-            </div>`;
+            return `<div class="hist-item"><div><b>${date}</b><br><small>Ads: ${data.ads || 0}</small></div><div style="color:var(--success-green); font-weight:bold;">+$${(data.income || 0).toFixed(3)}</div></div>`;
         }).join('');
     }
-
     function checkCooldowns() { const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer'); if (userData.taskLockTime && now < userData.taskLockTime) { if(adBtn) adBtn.disabled = true; startTaskCountdown(userData.taskLockTime); } else { if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, spins: 0, taskLockTime: 0 }); if(adBtn) adBtn.disabled = false; if(timerText) timerText.innerText = "00:00:00"; } }
     function startTaskCountdown(lock) { if(window.taskInterval) clearInterval(window.taskInterval); window.taskInterval = setInterval(() => { const diff = lock - Date.now(); if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; } const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000); document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }, 1000); }
-    function claimReferBonus() { if((userData.referCount || 0) <= 0) return alert("No referrals!"); db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() }); db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 }); }
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
-    
-    // --- কপি রেফার লিংক (সংশোধিত: যাতে গিটহাব লিংক কপি হয় কিন্তু দেখা না যায়) ---
-    function copyRef() { 
-        let baseUrl = window.location.href.split('?')[0];
-        let fullLink = baseUrl + "?start=" + userData.uid;
-        navigator.clipboard.writeText(fullLink); 
-        alert("Refer Link Copied!"); 
-    }
-
+    function copyRef() { let fullLink = window.location.href.split('?')[0] + "?start=" + userData.uid; navigator.clipboard.writeText(fullLink); alert("Refer Link Copied!"); }
     function logout() { localStorage.clear(); location.reload(); }
-    function showPage(id, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(id).classList.add('active-page'); if(el && el.classList.contains('nav-item')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } if(id === 'rank') fetchLeaderboard(); }
+    function showPage(id, el) { 
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); 
+        document.getElementById(id).classList.add('active-page'); 
+        if(el && el.classList.contains('nav-item')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } 
+        if(id === 'rank') fetchLeaderboard();
+        if(id === 'refer_claim') fetchReferralList();
+    }
 </script>
 </body>
-                </html>
+            </html>
