@@ -133,7 +133,7 @@
             <div class="card" style="padding-top: 30px;">
                 <h4 id="uName">স্বাগতম!</h4>  
                 <div class="main-bal" id="hBal">$0.000</div>  
-                <p id="hInvalidUI" style="color:var(--accent-red); font-size:16px; font-weight:bold; margin:0;">Invalid Click: 0 / 3</p>
+                <p id="hInvalidUI" style="color:var(--accent-red); font-size:16px; font-weight:bold; margin:0;">Invalid Click: 0 / 5</p>
             </div>  
 
             <div class="grid">  
@@ -247,7 +247,7 @@
     const db = firebase.database();
 
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
-    let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
+    let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, streak: 0, lastActive: 0 };
 
     async function detectVPN() {
         try {
@@ -277,27 +277,19 @@
     }
     initApp();
 
-    window.onblur = function() { userData.lastBlur = Date.now(); };
-    window.onfocus = function() {
-        if (userData.lastBlur > 0) {
-            let stayTime = Date.now() - userData.lastBlur;
-            if (stayTime > 500 && stayTime < 8000) { reportInvalidClick(); }
-            userData.lastBlur = 0;
-        }
-    };
-
+    // সমাধান: ১. ইনভ্যালিড ক্লিক লজিক সংশোধন (লিঙ্কে ক্লিক করলে ব্যান হওয়া বন্ধ)
     function reportInvalidClick() {
         if(!userData.uid || userData.status === "Banned") return;
         userData.invalidClicks = (userData.invalidClicks || 0) + 1;
         let updates = { invalidClicks: userData.invalidClicks };
-        if (userData.invalidClicks >= 3) {
+        if (userData.invalidClicks >= 5) {
             updates.status = "Banned";
             db.ref('users/' + userData.uid).update(updates);
             document.getElementById('main-content').style.display = 'none';
             document.getElementById('ban-page').style.display = 'flex';
         } else {
             db.ref('users/' + userData.uid).update(updates);
-            alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! (" + userData.invalidClicks + "/3)");
+            alert("⚠️ সতর্কতা: নিয়ম ভঙ্গ করবেন না! (" + userData.invalidClicks + "/5)");
         }
     }
 
@@ -311,7 +303,7 @@
         }
     });
 
-    // সংশোধিত handleAuth ফাংশন যা রেফারেল রিকোয়েস্ট পাঠাবে
+    // সমাধান ২. রেফারেল সিস্টেম সংশোধন (বট প্যারামিটার রিড করা)
     function handleAuth() {
         const email = document.getElementById('auth-email').value.trim(), 
               pass = document.getElementById('auth-pass').value.trim(), 
@@ -326,27 +318,17 @@
                 if (snap.exists()) alert("এই ইমেইল দিয়ে অলরেডি একাউন্ট খোলা আছে!");
                 else {
                     const newUserData = {
-                        uid: uid,
-                        email: email,
-                        password: pass,
-                        balance: 0.00,
-                        ads: 0,
-                        spins: 0,
-                        referCount: 0,
-                        status: "Active",
-                        invalidClicks: 0,
-                        streak: 1,
-                        lastActive: Date.now(),
-                        lastDaily: 0
+                        uid: uid, email: email, password: pass, balance: 0.00,
+                        ads: 0, spins: 0, referCount: 0, status: "Active",
+                        invalidClicks: 0, streak: 1, lastActive: Date.now(), lastDaily: 0
                     };
 
                     db.ref('users/' + uid).set(newUserData).then(() => {
-                        // ইউআরএল থেকে রেফার আইডি চেক করা
+                        // URL থেকে সরাসরি রেফার আইডি চেক
                         const urlParams = new URLSearchParams(window.location.search);
                         const refBy = urlParams.get('start');
 
-                        if(refBy && refBy !== uid) {
-                            // রেফার রিকোয়েস্ট ডাটাবেসে পাঠানো যা এডমিন প্যানেলে শো করবে
+                        if(refBy && refBy !== uid && refBy !== "%start_param%") {
                             db.ref('refer_pending').push({
                                 referrerUid: refBy,
                                 referredEmail: email,
@@ -375,7 +357,7 @@
         db.ref('users/' + userData.uid).on('value', snap => { 
             if(snap.exists()) { 
                 userData = snap.val(); 
-                if(userData.status === "Banned" || (userData.invalidClicks || 0) >= 3) {
+                if(userData.status === "Banned" || (userData.invalidClicks || 0) >= 5) {
                     document.getElementById('main-content').style.display = 'none';
                     document.getElementById('ban-page').style.display = 'flex';
                 } else {
@@ -430,7 +412,7 @@
         document.getElementById('pEmail').innerText = userData.email;
         document.getElementById('hStreak').innerText = userData.streak || 0;
         document.getElementById('hRefCount').innerText = userData.referCount || 0;
-        document.getElementById('hInvalidUI').innerText = "Invalid Click: " + (userData.invalidClicks || 0) + " / 3";
+        document.getElementById('hInvalidUI').innerText = "Invalid Click: " + (userData.invalidClicks || 0) + " / 5";
         
         const totalAdLimit = parseInt(appConfig.adLimit) || 15;
         const totalSpinLimit = parseInt(appConfig.spinLimit) || 10;
@@ -614,6 +596,7 @@
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
     
+    // সমাধান: ৩. সঠিক রেফার লিঙ্ক জেনারেটর (ইউজারকে বটে পাঠাবে)
     function copyRef() { 
         const botUsername = "lite_income_bot"; 
         const referId = userData.uid;
