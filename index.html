@@ -196,7 +196,11 @@
                 <h3 style="color:var(--primary-blue); margin-bottom:5px;">প্রোফাইল</h3>  
                 <p id="pEmail" style="color:gray; font-size: 14px; margin-bottom:15px;"></p>  
                 <div class="ref-box" id="refLinkText" style="font-size:13px; font-weight:bold; color:var(--primary-blue);">লিঙ্ক তৈরি হচ্ছে...</div>  
-                <button class="btn" onclick="copyRef()" style="padding:10px; font-size:12px;">Copy Link</button> 
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="copyRef()" style="padding:10px; font-size:12px; flex: 1;">Copy Link</button> 
+                    <button class="btn" onclick="shareOnTelegram()" style="padding:10px; font-size:12px; flex: 1; background: #229ED9;">Share Telegram</button> 
+                </div>
             </div>
             <div class="menu-item" onclick="showPage('refer_claim', this)">
                 <span>👥 রেফারেল বোনাস ক্লেইম <span id="pendingRefBadge" class="pending-badge">0</span></span>
@@ -243,7 +247,6 @@
     const db = firebase.database();
 
     const refBy = new URLSearchParams(window.location.search).get('start');
-    // Added minReferLimit to appConfig
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
@@ -547,7 +550,6 @@
         } 
     }
     
-    // UPDATED Withdraw Function with Referral Check
     function requestWithdraw() { 
         const amt = parseFloat(document.getElementById('wAmount').value), method = document.getElementById('wMethod').value, num = document.getElementById('wNumber').value; 
         const minLimit = parseFloat(appConfig.minWithdraw) || 1.00; 
@@ -555,12 +557,9 @@
         const userRef = parseInt(userData.referCount) || 0;
 
         if(!num || isNaN(amt)) return alert("সব পূরণ করুন!"); 
-        
-        // Referral Check Logic
         if(userRef < minRef) {
             return alert("উইথড্র করতে কমপক্ষে " + minRef + " টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: " + userRef + " টি।");
         }
-
         if(amt < minLimit) return alert("মিনিমাম লিমিট $" + minLimit.toFixed(2)); 
         if(amt > userData.balance) return alert("পর্যাপ্ত ব্যালেন্স নেই!"); 
         
@@ -584,7 +583,25 @@
     function startTaskCountdown(lock) { if(window.taskInterval) clearInterval(window.taskInterval); window.taskInterval = setInterval(() => { const diff = lock - Date.now(); if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; } const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000); document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }, 1000); }
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
-    function copyRef() { let fullLink = window.location.href.split('?')[0] + "?start=" + userData.uid; navigator.clipboard.writeText(fullLink); alert("Refer Link Copied!"); }
+    
+    // UPDATED REFERRAL FUNCTIONS
+    function copyRef() { 
+        const botUsername = "lite_income_bot"; 
+        const referId = userData.uid;
+        const fullLink = `https://t.me/${botUsername}?start=${referId}`; 
+        navigator.clipboard.writeText(fullLink); 
+        alert("টেলিগ্রাম রেফার লিংক কপি হয়েছে!"); 
+    }
+    
+    function shareOnTelegram() {
+        const botUsername = "lite_income_bot";
+        const referId = userData.uid;
+        const shareLink = `https://t.me/${botUsername}?start=${referId}`;
+        const shareText = encodeURIComponent("🔥 প্রতিদিন ভিডিও দেখে এবং ক্যাপচা পূরণ করে আয় করুন!\nজয়েন করলেই পাবেন বোনাস।\nলিংক: ");
+        const finalUrl = `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${shareText}`;
+        window.open(finalUrl, '_blank');
+    }
+
     function logout() { localStorage.clear(); location.reload(); }
     function showPage(id, el) { 
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); 
@@ -595,4 +612,4 @@
     }
 </script>
 </body>
-            </html>
+    </html>
