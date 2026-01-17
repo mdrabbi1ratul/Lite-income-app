@@ -178,7 +178,7 @@
             <div class="card">  
                 <h3 style="color:var(--primary-blue); margin-bottom:5px;">প্রোফাইল</h3>  
                 <p id="pEmail" style="color:gray; font-size: 14px; margin-bottom:15px;"></p>  
-                <div class="ref-box" id="refLinkText" style="font-size:10px;">লিঙ্ক তৈরি হচ্ছে...</div>  
+                <div class="ref-box" id="refLinkText" style="font-size:13px; font-weight:bold; color:var(--primary-blue);">লিঙ্ক তৈরি হচ্ছে...</div>  
                 <button class="btn" onclick="copyRef()" style="padding:10px; font-size:12px;">Copy Link</button> 
             </div>
             <div class="menu-item" onclick="showPage('refer_claim', this)">
@@ -227,22 +227,33 @@
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
-    // --- VPN Detection ---
+    // --- উন্নত VPN ডিটেকশন (Timezone + API) ---
     async function detectVPN() {
         try {
+            // ১. টাইমজোন চেক (ভিপিএন থাকলে প্রায়ই ঢাকার বাইরে থাকে)
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (userTimezone !== "Asia/Dhaka") return true;
+
+            // ২. বিকল্প API চেক
             const response = await fetch('https://ipapi.co/json/');
             const data = await response.json();
+            
+            // ৩. সিকিউরিটি ফ্ল্যাগ চেক
             if (data.security && (data.security.proxy || data.security.vpn)) return true;
+            
+            // ৪. হোস্টিং চেক
             const org = data.org ? data.org.toLowerCase() : "";
-            const blockedOrgs = ["vpn", "proxy", "hosting", "datacenter", "digitalocean", "cloudflare"];
+            const blockedOrgs = ["vpn", "proxy", "hosting", "datacenter", "digitalocean", "cloudflare", "google"];
             if (blockedOrgs.some(item => org.includes(item))) return true;
+
             return false;
         } catch (error) {
-            return false;
+            return false; 
         }
     }
 
     async function initApp() {
+        // শুরুতেই ভিপিএন চেক
         const isVPN = await detectVPN();
         if (isVPN) {
             document.getElementById('vpn-page').style.display = 'flex';
@@ -280,6 +291,7 @@
         userData.invalidClicks = (userData.invalidClicks || 0) + 1;
         let updates = { invalidClicks: userData.invalidClicks };
         
+        // ৩ টি ক্লিক হলেই সাথে সাথে ব্যান
         if (userData.invalidClicks >= 3) {
             updates.status = "Banned";
             db.ref('users/' + userData.uid).update(updates);
@@ -324,13 +336,15 @@
         }
     }
 
+    // --- ব্যান চেক অটোমেশন ---
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
         
         db.ref('users/' + userData.uid).on('value', snap => { 
             if(snap.exists()) { 
                 userData = snap.val(); 
-                if(userData.status === "Banned") {
+                // লগইন এর সময় বা ডাটাবেজ আপডেটের সময় ব্যান চেক
+                if(userData.status === "Banned" || (userData.invalidClicks || 0) >= 3) {
                     document.getElementById('main-content').style.display = 'none';
                     document.getElementById('ban-page').style.display = 'flex';
                 } else {
@@ -386,8 +400,8 @@
         document.getElementById('tLimit').innerText = "Ads: " + doneAds + " / " + totalAdLimit;
         document.getElementById('sLimit').innerText = "Tasks: " + doneSpins + " / " + totalSpinLimit;
         
-        let baseUrl = window.location.href.split('?')[0];
-        document.getElementById('refLinkText').innerText = baseUrl + "?start=" + userData.uid;
+        // --- প্রোফাইলে রেফার আইডি ডিসপ্লে (গিটহাব লিংক হাইড) ---
+        document.getElementById('refLinkText').innerText = "Refer ID: " + userData.uid;
         
         const dBtn = document.getElementById('dailyBtn');
         if (new Date().toDateString() === new Date(userData.lastDaily || 0).toDateString()) {
@@ -453,7 +467,6 @@
         const btn = document.getElementById('captchaBtn');
         btn.disabled = true;
 
-        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') {
             show_10411839().then(() => { processCaptchaReward(btn); }).catch(() => { alert("এড লোড হয়নি"); btn.disabled = false; });
         } else { processCaptchaReward(btn); }
@@ -488,7 +501,6 @@
     function playAd() { 
         if (userData.ads >= appConfig.adLimit) return alert("Limit Over!"); 
         
-        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') { 
             const btn = document.getElementById('adBtn');
             btn.disabled = true;
@@ -514,7 +526,6 @@
         } 
     }
     function claimDailyBonus() { 
-        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') { 
             show_10411839().then(() => { 
                 db.ref('users/' + userData.uid).update({ 
@@ -556,9 +567,17 @@
     function claimReferBonus() { if((userData.referCount || 0) <= 0) return alert("No referrals!"); db.ref('refer_claims').push({ refByEmail: userData.email, refByUid: userData.uid, status: "Pending", date: new Date().toLocaleString() }); db.ref('users/' + userData.uid).update({ referCount: userData.referCount - 1 }); }
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
-    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Copied!"); }
+    
+    // --- কপি রেফার লিংক (সংশোধিত: যাতে গিটহাব লিংক কপি হয় কিন্তু দেখা না যায়) ---
+    function copyRef() { 
+        let baseUrl = window.location.href.split('?')[0];
+        let fullLink = baseUrl + "?start=" + userData.uid;
+        navigator.clipboard.writeText(fullLink); 
+        alert("Refer Link Copied!"); 
+    }
+
     function logout() { localStorage.clear(); location.reload(); }
     function showPage(id, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(id).classList.add('active-page'); if(el && el.classList.contains('nav-item')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } if(id === 'rank') fetchLeaderboard(); }
 </script>
 </body>
-                                                                                             </html>
+                </html>
