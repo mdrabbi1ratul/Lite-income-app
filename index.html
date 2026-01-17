@@ -277,7 +277,6 @@
     }
     initApp();
 
-    // সমাধান: ১. ইনভ্যালিড ক্লিক লজিক সংশোধন (লিঙ্কে ক্লিক করলে ব্যান হওয়া বন্ধ)
     function reportInvalidClick() {
         if(!userData.uid || userData.status === "Banned") return;
         userData.invalidClicks = (userData.invalidClicks || 0) + 1;
@@ -303,7 +302,7 @@
         }
     });
 
-    // সমাধান ২. রেফারেল সিস্টেম সংশোধন (বট প্যারামিটার রিড করা)
+    // রেফারেল ডাটা হ্যান্ডলিং (সংশোধিত)
     function handleAuth() {
         const email = document.getElementById('auth-email').value.trim(), 
               pass = document.getElementById('auth-pass').value.trim(), 
@@ -324,9 +323,9 @@
                     };
 
                     db.ref('users/' + uid).set(newUserData).then(() => {
-                        // URL থেকে সরাসরি রেফার আইডি চেক
+                        // টেলিগ্রাম থেকে আসা রেফার আইডি চেক (tgWebAppStartParam)
                         const urlParams = new URLSearchParams(window.location.search);
-                        const refBy = urlParams.get('start');
+                        const refBy = urlParams.get('tgWebAppStartParam') || urlParams.get('start');
 
                         if(refBy && refBy !== uid && refBy !== "%start_param%") {
                             db.ref('refer_pending').push({
@@ -596,10 +595,11 @@
     function togglePassword() { const pass = document.getElementById('auth-pass'); pass.type = pass.type === "password" ? "text" : "password"; }
     function toggleAuth() { const title = document.getElementById('auth-title'), btn = document.getElementById('auth-btn'), text = document.getElementById('auth-toggle-text'); if (title.innerText === "Login") { title.innerText = "Sign Up"; btn.innerText = "Register Now"; text.innerHTML = 'Account আছে? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Login করুন</span>'; } else { title.innerText = "Login"; btn.innerText = "Login Now"; text.innerHTML = 'Account নেই? <span style="color: var(--primary-blue); cursor: pointer;" onclick="toggleAuth()">Sign Up করুন</span>'; } }
     
-    // সমাধান: ৩. সঠিক রেফার লিঙ্ক জেনারেটর (ইউজারকে বটে পাঠাবে)
+    // টেলিগ্রাম রেফার লিঙ্ক জেনারেটর (সংশোধিত)
     function copyRef() { 
         const botUsername = "lite_income_bot"; 
         const referId = userData.uid;
+        // টেলিগ্রামের স্ট্যান্ডার্ড রেফার লিঙ্ক
         const fullLink = `https://t.me/${botUsername}?start=${referId}`; 
         navigator.clipboard.writeText(fullLink); 
         alert("টেলিগ্রাম রেফার লিংক কপি হয়েছে!"); 
@@ -624,4 +624,4 @@
     }
 </script>
 </body>
-    </html>
+                </html>
