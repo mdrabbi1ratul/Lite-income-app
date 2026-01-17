@@ -6,6 +6,7 @@
     <title>Lite Income - Professional App</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
     <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>  
 
 <style>
@@ -56,7 +57,7 @@
     .menu-item:active { background: #1c2128; }
 
     #auth-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-    #ban-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: white; }
+    #ban-page, #vpn-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: white; }
     .pass-container { position: relative; width: 100%; }
     .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--primary-blue); font-size: 12px; font-weight: bold; }
     .page { display: none; animation: fadeIn 0.3s ease; }
@@ -82,6 +83,12 @@
         <h1 style="color:var(--accent-red); font-size: 40px;">🚫 BANNED</h1>
         <p style="margin: 20px 0;">অতিরিক্ত ইনভ্যালিড ক্লিকের কারণে আপনার অ্যাকাউন্টটি ব্যান করা হয়েছে।</p>
         <button class="btn" onclick="window.open('https://t.me/YourAdmin')">Contact Admin</button>
+    </div>
+
+    <div id="vpn-page">
+        <h1 style="color:var(--warning-yellow); font-size: 40px;">⚠️ VPN DETECTED</h1>
+        <p style="margin: 20px 0;">নিরাপত্তার খাতিরে ভিপিএন ব্যবহার করে অ্যাপ চালানো নিষেধ। দয়া করে ভিপিএন বন্ধ করে পুনরায় অ্যাপ ওপেন করুন।</p>
+        <button class="btn" onclick="location.reload()">Retry Now</button>
     </div>
 
     <div id="auth-page">  
@@ -220,22 +227,69 @@
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, lastBlur: 0, streak: 0, lastActive: 0 };
 
+    // --- VPN Detection ---
+    async function detectVPN() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            if (data.security && (data.security.proxy || data.security.vpn)) return true;
+            const org = data.org ? data.org.toLowerCase() : "";
+            const blockedOrgs = ["vpn", "proxy", "hosting", "datacenter", "digitalocean", "cloudflare"];
+            if (blockedOrgs.some(item => org.includes(item))) return true;
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    async function initApp() {
+        const isVPN = await detectVPN();
+        if (isVPN) {
+            document.getElementById('vpn-page').style.display = 'flex';
+            document.getElementById('auth-page').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            return;
+        }
+
+        const savedUid = localStorage.getItem('lite_user_id');
+        if(savedUid) {
+            db.ref('users/' + savedUid).once('value', snap => { 
+                if(snap.exists()) { 
+                    userData = snap.val(); 
+                    loginSuccess(); 
+                } 
+            });
+        }
+    }
+
+    initApp();
+
     window.onblur = function() { userData.lastBlur = Date.now(); };
     window.onfocus = function() {
         if (userData.lastBlur > 0) {
             let stayTime = Date.now() - userData.lastBlur;
             if (stayTime > 500 && stayTime < 8000) { 
-                userData.invalidClicks = (userData.invalidClicks || 0) + 1;
-                db.ref('users/' + userData.uid).update({ invalidClicks: userData.invalidClicks });
-                if (userData.invalidClicks >= 3) {
-                    db.ref('users/' + userData.uid).update({ status: "Banned" });
-                } else {
-                    alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! শুধু বিজ্ঞাপনটি দেখুন। (" + userData.invalidClicks + "/3)");
-                }
+                reportInvalidClick();
             }
             userData.lastBlur = 0;
         }
     };
+
+    function reportInvalidClick() {
+        if(!userData.uid || userData.status === "Banned") return;
+        userData.invalidClicks = (userData.invalidClicks || 0) + 1;
+        let updates = { invalidClicks: userData.invalidClicks };
+        
+        if (userData.invalidClicks >= 3) {
+            updates.status = "Banned";
+            db.ref('users/' + userData.uid).update(updates);
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('ban-page').style.display = 'flex';
+        } else {
+            db.ref('users/' + userData.uid).update(updates);
+            alert("⚠️ সতর্কতা: বিজ্ঞাপনে ক্লিক করবেন না! শুধু বিজ্ঞাপনটি দেখুন। (" + userData.invalidClicks + "/3)");
+        }
+    }
 
     db.ref('app_config').on('value', snap => {
         if(snap.exists()) {
@@ -272,8 +326,7 @@
 
     function loginSuccess() {
         document.getElementById('auth-page').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        checkStreak();
+        
         db.ref('users/' + userData.uid).on('value', snap => { 
             if(snap.exists()) { 
                 userData = snap.val(); 
@@ -281,11 +334,13 @@
                     document.getElementById('main-content').style.display = 'none';
                     document.getElementById('ban-page').style.display = 'flex';
                 } else {
+                    document.getElementById('main-content').style.display = 'block';
                     document.getElementById('ban-page').style.display = 'none';
                     updateUI(); 
                 }
             } 
         });
+        checkStreak();
         fetchWithdrawHistory();
         fetchLeaderboard();
     }
@@ -397,6 +452,8 @@
         }
         const btn = document.getElementById('captchaBtn');
         btn.disabled = true;
+
+        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') {
             show_10411839().then(() => { processCaptchaReward(btn); }).catch(() => { alert("এড লোড হয়নি"); btn.disabled = false; });
         } else { processCaptchaReward(btn); }
@@ -430,6 +487,8 @@
     }
     function playAd() { 
         if (userData.ads >= appConfig.adLimit) return alert("Limit Over!"); 
+        
+        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') { 
             const btn = document.getElementById('adBtn');
             btn.disabled = true;
@@ -455,6 +514,7 @@
         } 
     }
     function claimDailyBonus() { 
+        // আপনার আইডি '10411839' এর ফাংশন কল করা হচ্ছে
         if (typeof show_10411839 === 'function') { 
             show_10411839().then(() => { 
                 db.ref('users/' + userData.uid).update({ 
@@ -478,7 +538,6 @@
     }
     function fetchWithdrawHistory() { db.ref('withdraws').orderByChild('email').equalTo(userData.email).on('value', snap => { const list = document.getElementById('withdrawHistoryList'); let html = ""; if(!snap.exists()) { list.innerHTML = "No History"; return; } snap.forEach(child => { const w = child.val(); let color = w.status === 'Paid' ? '#2ecc71' : (w.status === 'Rejected' ? '#e74c3c' : '#f1c40f'); html += `<div class="hist-item"><div><b>${w.method}</b><br><small>${w.date}</small></div><div style="color:${color}">$${w.amount.toFixed(3)} - ${w.status}</div></div>`; }); list.innerHTML = html; }); }
     
-    // --- (FIXED) Home History Rendering ---
     function renderDailyActivity() { 
         const list = document.getElementById('dailyActivityList');
         if (!userData.dailyActivity) { list.innerHTML = "<p style='text-align:center;color:gray;'>No Activity</p>"; return; }
@@ -500,8 +559,6 @@
     function copyRef() { navigator.clipboard.writeText(document.getElementById('refLinkText').innerText); alert("Copied!"); }
     function logout() { localStorage.clear(); location.reload(); }
     function showPage(id, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(id).classList.add('active-page'); if(el && el.classList.contains('nav-item')) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } if(id === 'rank') fetchLeaderboard(); }
-    const savedUid = localStorage.getItem('lite_user_id');
-    if(savedUid) db.ref('users/' + savedUid).once('value', snap => { if(snap.exists()) { userData = snap.val(); loginSuccess(); } });
 </script>
 </body>
-        </html>
+                                                                                             </html>
