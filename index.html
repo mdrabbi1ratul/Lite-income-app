@@ -108,7 +108,7 @@
     </div>
 
     <div id="auth-page">  
-        <div class="card" style="width: 100%; max-maxWidth: 400px;">  
+        <div class="card" style="width: 100%; max-width: 400px;">  
             <h2 id="auth-title" style="color: var(--primary-blue);">Login</h2>  
             <input type="email" id="auth-email" placeholder="আপনার ইমেইল">  
             <div class="pass-container">  
@@ -239,7 +239,6 @@
     </div>  
 
 <script>
-    // টেলিগ্রাম SDK ইনিশিয়ালাইজেশন
     const tg = window.Telegram.WebApp;
     tg.expand();
 
@@ -254,15 +253,16 @@
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, streak: 0, lastActive: 0 };
 
-    // ১০০% গ্যারান্টেড রেফারেল আইডি ডিটেক্টর
+    // আপডেট করা রেফারেল আইডি ডিটেক্টর
     function getReferrerId() {
-        // মেথড ১: টেলিগ্রাম অফিশিয়াল মেথড (সবচেয়ে নির্ভুল)
-        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-            return tg.initDataUnsafe.start_param;
-        }
-        // মেথড ২: ইউআরএল প্যারামিটার মেথড
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('tgWebAppStartParam') || urlParams.get('start');
+        let startParam = urlParams.get('tgWebAppStartParam') || urlParams.get('start');
+        
+        // টেলিগ্রাম অবজেক্ট থেকে সরাসরি ট্রাই
+        if (!startParam && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            startParam = tg.initDataUnsafe.start_param;
+        }
+        return startParam;
     }
 
     async function detectVPN() {
@@ -319,7 +319,7 @@
                     };
 
                     db.ref('users/' + uid).set(newUserData).then(() => {
-                        // রেফারেল ডিটেকশন কল করা হলো
+                        // আপডেট করা রেফারেল লজিক
                         const refBy = getReferrerId();
 
                         if(refBy && refBy !== uid && refBy.length > 5) {
@@ -328,7 +328,9 @@
                                 referredEmail: email,
                                 status: "Pending",
                                 date: new Date().toLocaleDateString()
-                            });
+                            }).then(() => {
+                                console.log("Referral recorded successfully");
+                            }).catch(err => console.error("Referral failed", err));
                         }
                         alert("রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।"); 
                         toggleAuth();
@@ -468,7 +470,6 @@
         });
     }
 
-    // ক্যাপচা এবং অ্যাডস সিস্টেম (অপরিবর্তিত)
     let currentCaptcha = "";
     let captchaInterval;
     function openCaptcha() {
@@ -586,9 +587,8 @@
     function claimDailyBonus() { if (typeof show_10411839 === 'function') { show_10411839().then(() => { db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), lastDaily: Date.now(), lastActive: Date.now() }); }); } }
 
     function copyRef() { 
-        const botUsername = "lite_income_bot"; 
-        const fullLink = `https://t.me/${botUsername}?start=${userData.uid}`; 
-        navigator.clipboard.writeText(fullLink); 
+        const shareLink = `https://t.me/lite_income_bot?start=${userData.uid}`; 
+        navigator.clipboard.writeText(shareLink); 
         alert("কপি হয়েছে!"); 
     }
     
@@ -610,4 +610,4 @@
     }
 </script>
 </body>
-    </html>
+                    </html>
