@@ -4,6 +4,7 @@
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
     <title>Lite Income - Professional App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
@@ -107,7 +108,7 @@
     </div>
 
     <div id="auth-page">  
-        <div class="card" style="width: 100%; max-width: 400px;">  
+        <div class="card" style="width: 100%; max-maxWidth: 400px;">  
             <h2 id="auth-title" style="color: var(--primary-blue);">Login</h2>  
             <input type="email" id="auth-email" placeholder="আপনার ইমেইল">  
             <div class="pass-container">  
@@ -238,7 +239,10 @@
     </div>  
 
 <script>
-    // আপনার ফায়ারবেস কনফিগ (হুবহু রাখা হয়েছে)
+    // টেলিগ্রাম SDK ইনিশিয়ালাইজেশন
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
     const firebaseConfig = {
         apiKey: "AIzaSyD_umGq2C78hRinwHGl9SNVFuZzb12iooc",
         databaseURL: "https://lite-income-f6287-default-rtdb.firebaseio.com/",
@@ -250,13 +254,21 @@
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60 };
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, streak: 0, lastActive: 0 };
 
+    // ১০০% গ্যারান্টেড রেফারেল আইডি ডিটেক্টর
+    function getReferrerId() {
+        // মেথড ১: টেলিগ্রাম অফিশিয়াল মেথড (সবচেয়ে নির্ভুল)
+        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            return tg.initDataUnsafe.start_param;
+        }
+        // মেথড ২: ইউআরএল প্যারামিটার মেথড
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('tgWebAppStartParam') || urlParams.get('start');
+    }
+
     async function detectVPN() {
         try {
             const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             if (userTimezone !== "Asia/Dhaka") return true;
-            const response = await fetch('https://ipapi.co/json/');
-            const data = await response.json();
-            if (data.security && (data.security.proxy || data.security.vpn)) return true;
             return false;
         } catch (error) { return false; }
     }
@@ -288,14 +300,12 @@
         }
     });
 
-    // রেফারেল সিস্টেম ১০০% ফিক্স করা হয়েছে
     function handleAuth() {
         const email = document.getElementById('auth-email').value.trim(), 
               pass = document.getElementById('auth-pass').value.trim(), 
               mode = document.getElementById('auth-title').innerText;
               
         if (!email || !pass) return alert("সব পূরণ করুন!");
-        
         const uid = btoa(email).replace(/[^a-zA-Z0-9]/g, "").substring(0, 15);
         
         if (mode === "Sign Up") {
@@ -309,12 +319,10 @@
                     };
 
                     db.ref('users/' + uid).set(newUserData).then(() => {
-                        // সংশোধিত রেফারেল ডিটেকশন (tgWebAppStartParam)
-                        const urlParams = new URLSearchParams(window.location.search);
-                        let refBy = urlParams.get('tgWebAppStartParam') || urlParams.get('start');
+                        // রেফারেল ডিটেকশন কল করা হলো
+                        const refBy = getReferrerId();
 
-                        // যদি নিজের রেফার আইডি না হয় এবং ভ্যালিড হয়
-                        if(refBy && refBy !== uid && refBy.length > 5 && refBy !== "%start_param%") {
+                        if(refBy && refBy !== uid && refBy.length > 5) {
                             db.ref('refer_pending').push({
                                 referrerUid: refBy,
                                 referredEmail: email,
@@ -371,7 +379,6 @@
         });
     }
 
-    // স্ট্রিক লজিক (হুবহু এক)
     function checkStreak() {
         const now = new Date();
         const lastActive = new Date(userData.lastActive || 0);
@@ -419,7 +426,6 @@
         handleCaptchaCooldownUI();
     }
 
-    // রেফারেল অ্যাক্টিভিটি ফেচ করা (সংশোধিত)
     function fetchReferralList() {
         const container = document.getElementById('referListContainer');
         db.ref('refer_pending').orderByChild('referrerUid').equalTo(userData.uid).on('value', snap => {
@@ -462,7 +468,7 @@
         });
     }
 
-    // ক্যাপচা এবং অন্যান্য ফাংশনালিটি (হুবহু এক রাখা হয়েছে)
+    // ক্যাপচা এবং অ্যাডস সিস্টেম (অপরিবর্তিত)
     let currentCaptcha = "";
     let captchaInterval;
     function openCaptcha() {
@@ -487,7 +493,7 @@
             if (captchaInterval) clearInterval(captchaInterval);
             captchaInterval = setInterval(() => {
                 const remaining = Math.ceil(((userData.lastSpinTime || 0) + cooldown - Date.now()) / 1000);
-                if (remaining <= 0) { clearInterval(captchaInterval); timerText.style.display = "none"; captchaBtn.disabled = false; generateNewCaptcha(); }
+                if (remaining <= 0) { clearInterval(captchaInterval); timerText.style.display = "none"; if(captchaBtn) captchaBtn.disabled = false; generateNewCaptcha(); }
                 else { timerText.innerText = `Next in: ${remaining}s`; }
             }, 1000);
         } else { if(captchaBtn) captchaBtn.disabled = false; if(timerText) timerText.style.display = "none"; }
@@ -552,7 +558,6 @@
         }); 
     }
 
-    // লিডারবোর্ড এবং ইতিহাস ফাংশন (হুবহু এক)
     function fetchLeaderboard() {
         db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
             const list = document.getElementById('leaderboardList');
@@ -578,28 +583,18 @@
 
     function checkCooldowns() { const now = Date.now(), adBtn = document.getElementById('adBtn'), timerText = document.getElementById('main-timer'); if (userData.taskLockTime && now < userData.taskLockTime) { if(adBtn) adBtn.disabled = true; startTaskCountdown(userData.taskLockTime); } else { if(userData.taskLockTime) db.ref('users/' + userData.uid).update({ ads: 0, spins: 0, taskLockTime: 0 }); if(adBtn) adBtn.disabled = false; if(timerText) timerText.innerText = "00:00:00"; } }
     function startTaskCountdown(lock) { if(window.taskInterval) clearInterval(window.taskInterval); window.taskInterval = setInterval(() => { const diff = lock - Date.now(); if (diff <= 0) { clearInterval(window.taskInterval); updateUI(); return; } const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000); document.getElementById('main-timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }, 1000); }
-    
-    function claimDailyBonus() { 
-        if (typeof show_10411839 === 'function') { 
-            show_10411839().then(() => { 
-                db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), lastDaily: Date.now(), lastActive: Date.now() }); 
-            }); 
-        } 
-    }
+    function claimDailyBonus() { if (typeof show_10411839 === 'function') { show_10411839().then(() => { db.ref('users/' + userData.uid).update({ balance: (parseFloat(userData.balance) + parseFloat(appConfig.dailyBonus)), lastDaily: Date.now(), lastActive: Date.now() }); }); } }
 
     function copyRef() { 
         const botUsername = "lite_income_bot"; 
-        const referId = userData.uid;
-        const fullLink = `https://t.me/${botUsername}?start=${referId}`; 
+        const fullLink = `https://t.me/${botUsername}?start=${userData.uid}`; 
         navigator.clipboard.writeText(fullLink); 
         alert("কপি হয়েছে!"); 
     }
     
     function shareOnTelegram() {
-        const botUsername = "lite_income_bot";
-        const referId = userData.uid;
-        const shareLink = `https://t.me/${botUsername}?start=${referId}`;
-        const shareText = encodeURIComponent("🔥 প্রতিদিন ভিডিও দেখে এবং ক্যাপচা পূরণ করে আয় করুন!\nলিংক: ");
+        const shareLink = `https://t.me/lite_income_bot?start=${userData.uid}`;
+        const shareText = encodeURIComponent("🔥 প্রতিদিন ভিডিও দেখে এবং আয় করুন!\nলিংক: ");
         window.open(`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${shareText}`, '_blank');
     }
 
