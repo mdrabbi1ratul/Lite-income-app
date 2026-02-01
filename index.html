@@ -9,7 +9,7 @@
     <script src='//libtl.com/sdk.js' data-zone='10411839' data-sdk='show_10411839'></script>
 
 <style>  
-    /* আপনার অরিজিনাল কালার প্যালেট ও ডিজাইন হুবহু রাখা হয়েছে */
+    /* আপনার অরিজিনাল ডিজাইন হুবহু রাখা হয়েছে */
     :root { 
         --primary-glow: #00d2ff;
         --secondary-glow: #3a7bd5;
@@ -49,7 +49,7 @@
         padding: 8px 20px;   
         border-radius: 50px;   
         font-weight: 800;   
-        font-size: 14px;   
+        font-size: 18px;   
         display: flex;   
         align-items: center;   
         gap: 8px;   
@@ -116,7 +116,7 @@
     </div>
 
     <div id="ban-page" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: white;">  
-        <h1 style="color:var(--accent-red); font-size: 40px;">🚫 BANNED</h1>  
+        <h1 style="color:var(--accent-red); font-size: 40px;">🚫 BANNED ⛔</h1>  
         <p style="margin: 20px 0;">অতিরিক্ত ইনভ্যালিড ক্লিকের কারণে আপনার অ্যাকাউন্টটি ব্যান করা হয়েছে।</p>  
         <button class="btn" onclick="window.open('https://t.me/lite_income')">Contact Admin</button>  
     </div>  
@@ -182,13 +182,24 @@
   
     let appConfig = { adLimit: 15, cooldownMins: 720, referReward: 0.10, dailyBonus: 0.05, notice: "অ্যাপে স্বাগতম!", minWithdraw: 1.00, minReferLimit: 0, adReward: 0.005, spinLimit: 10, spinReward: 0.003, spinCooldownSec: 60, popupNotice: "", alertNotice: "" };  
     let userData = { uid: "", balance: 0.00, ads: 0, spins: 0, lastSpinTime: 0, lastAdTime: 0, taskLockTime: 0, lastDaily: 0, history: [], dailyActivity: {}, referCount: 0, email: "", password: "", status: "Active", invalidClicks: 0, streak: 0, lastActive: 0 };  
-  
-    function getReferrerId() {  
+
+    // রেফারেল আইডি সেভ করার জন্য গ্লোবাল ভেরিয়েবল
+    let globalReferrerId = null;
+
+    function detectReferrer() {  
         const urlParams = new URLSearchParams(window.location.search);  
         let startParam = urlParams.get('tgWebAppStartParam') || urlParams.get('startapp');  
-        if (!startParam && tg.initDataUnsafe && tg.initDataUnsafe.start_param) { startParam = tg.initDataUnsafe.start_param; }  
-        return startParam;  
+        if (!startParam && tg.initDataUnsafe && tg.initDataUnsafe.start_param) { 
+            startParam = tg.initDataUnsafe.start_param; 
+        }  
+        globalReferrerId = startParam;
+        console.log("Ref Detected: ", globalReferrerId);
     }  
+
+    // অ্যাপ লোড হওয়ার সাথে সাথে আইডি ডিটেক্ট করো
+    detectReferrer();
+    // ১ সেকেন্ড পর আবার চেক করো (টেলিগ্রাম ডিলের জন্য)
+    setTimeout(detectReferrer, 1000);
   
     async function detectVPN() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone !== "Asia/Dhaka"; } catch (e) { return false; } }  
   
@@ -217,35 +228,60 @@
         const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value.trim(), mode = document.getElementById('auth-title').innerText;  
         if (!email || !pass) return alert("সব পূরণ করুন!");  
         const uid = btoa(email).replace(/[^a-zA-Z0-9]/g, "").substring(0, 15);  
+        
         if (mode === "Sign Up") {  
             db.ref('users/' + uid).once('value', snap => {  
                 if (snap.exists()) alert("এই ইমেইল দিয়ে অলরেডি একাওন্ট খোলা আছে!");  
                 else {  
                     const newUserData = { uid: uid, email: email, password: pass, balance: 0.00, ads: 0, spins: 0, referCount: 0, status: "Active", invalidClicks: 0, streak: 1, lastActive: Date.now(), lastDaily: 0 };  
+                    
                     db.ref('users/' + uid).set(newUserData).then(() => {  
-                        const refBy = getReferrerId();  
+                        // সংশোধিত রেফারেল বোনাস লজিক
+                        const refBy = globalReferrerId; 
                         if(refBy && refBy !== uid) {  
                             const reward = parseFloat(appConfig.referReward) || 0.10;
+                            // রেফারার অ্যাকাউন্টে বোনাস যোগ (Transaction Safe)
                             db.ref('users/' + refBy).transaction((user) => {
-                                if (user) { user.balance = (parseFloat(user.balance) || 0) + reward; user.referCount = (parseInt(user.referCount) || 0) + 1; }
+                                if (user) { 
+                                    user.balance = (parseFloat(user.balance) || 0) + reward; 
+                                    user.referCount = (parseInt(user.referCount) || 0) + 1; 
+                                }
                                 return user;
                             });
-                            db.ref('refer_history').push({ referrer: refBy, referred: uid, email: email, amount: reward, date: new Date().toLocaleString() });
+                            // রেফার হিস্ট্রি সেভ
+                            db.ref('refer_history').push({ 
+                                referrer: refBy, referred: uid, email: email, amount: reward, date: new Date().toLocaleString() 
+                            });
                         }
-                        alert("রেজিস্ট্রেশন সফল! লগইন করুন।"); toggleAuth();  
+                        alert("রেজিস্ট্রেশন সফল! এখন লগইন করুন।"); toggleAuth();  
                     });  
                 }  
             });  
         } else {  
             db.ref('users/' + uid).once('value', snap => {  
-                if (snap.exists() && snap.val().password === pass) { userData = snap.val(); localStorage.setItem('lite_user_id', uid); loginSuccess(); } else alert("ভুল ইমেইল বা পাসওয়ার্ড!");  
+                if (snap.exists() && snap.val().password === pass) { 
+                    userData = snap.val(); 
+                    localStorage.setItem('lite_user_id', uid); 
+                    loginSuccess(); 
+                } else alert("ভুল ইমেইল বা পাসওয়ার্ড!");  
             });  
         }  
     }  
   
     function loginSuccess() {  
         document.getElementById('auth-page').style.display = 'none';  
-        db.ref('users/' + userData.uid).on('value', snap => { if(snap.exists()) { userData = snap.val(); if(userData.status === "Banned") { document.getElementById('main-content').style.display = 'none'; document.getElementById('ban-page').style.display = 'flex'; } else { document.getElementById('main-content').style.display = 'block'; updateUI(); } } });  
+        db.ref('users/' + userData.uid).on('value', snap => { 
+            if(snap.exists()) { 
+                userData = snap.val(); 
+                if(userData.status === "Banned") { 
+                    document.getElementById('main-content').style.display = 'none'; 
+                    document.getElementById('ban-page').style.display = 'flex'; 
+                } else { 
+                    document.getElementById('main-content').style.display = 'block'; 
+                    updateUI(); 
+                } 
+            } 
+        });  
         checkStreak(); fetchWithdrawHistory(); fetchLeaderboard();  
     }  
   
@@ -353,4 +389,4 @@
     function showPage(id, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(id).classList.add('active-page'); if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); } if(id === 'rank') fetchLeaderboard(); }  
 </script>  
 </body>  
-                                                                                                                                                                                                                                                                                                                                                         </html>
+                                                                                                                                                                                                                                                                                                                   </html>
